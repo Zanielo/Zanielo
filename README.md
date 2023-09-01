@@ -1,1617 +1,2185 @@
-function initWebPixel() {
-    (function(shopify) {
-        shopify.extend('WebPixel::Render', function(api) {
-            var analytics = api.analytics
-              , browser = api.browser
-              , init = api.init;
-            var e = api._pixelInfo ? api._pixelInfo.runtimeContext : null
-              , n = api._pixelInfo ? api._pixelInfo.type : null;
-            analytics.subscribe("all_standard_events", (function(i) {
-                var l, o;
-                l = i.name,
-                o = i,
-                browser.localStorage.getItem("shopify-pixel-mode").then((function(i) {
-                    "debug" === i && console.log(`[shopify-pixel][${n}][${e}] ${l}`, o)
-                }
-                )).catch((function() {}
-                ))
-            }
-            ));
-        });
-
-    }
-    )(self.webPixelsManager.createShopifyExtend('shopify-app-pixel', 'app'));
-}
-(()=>{
-    var e = {
-        747: function(e, t, r) {
-            var i, n, o;
-            !function(a, s) {
-                "use strict";
-                n = [r(18)],
-                void 0 === (o = "function" == typeof (i = function(e) {
-                    var t = /(^|@)\S+:\d+/
-                      , r = /^\s*at .*(\S+:\d+|\(native\))/m
-                      , i = /^(eval@)?(\[native code])?$/;
-                    return {
-                        parse: function(e) {
-                            if (void 0 !== e.stacktrace || void 0 !== e["opera#sourceloc"])
-                                return this.parseOpera(e);
-                            if (e.stack && e.stack.match(r))
-                                return this.parseV8OrIE(e);
-                            if (e.stack)
-                                return this.parseFFOrSafari(e);
-                            throw new Error("Cannot parse given Error object")
-                        },
-                        extractLocation: function(e) {
-                            if (-1 === e.indexOf(":"))
-                                return [e];
-                            var t = /(.+?)(?::(\d+))?(?::(\d+))?$/.exec(e.replace(/[()]/g, ""));
-                            return [t[1], t[2] || void 0, t[3] || void 0]
-                        },
-                        parseV8OrIE: function(t) {
-                            return t.stack.split("\n").filter((function(e) {
-                                return !!e.match(r)
-                            }
-                            ), this).map((function(t) {
-                                t.indexOf("(eval ") > -1 && (t = t.replace(/eval code/g, "eval").replace(/(\(eval at [^()]*)|(,.*$)/g, ""));
-                                var r = t.replace(/^\s+/, "").replace(/\(eval code/g, "(").replace(/^.*?\s+/, "")
-                                  , i = r.match(/ (\(.+\)$)/);
-                                r = i ? r.replace(i[0], "") : r;
-                                var n = this.extractLocation(i ? i[1] : r)
-                                  , o = i && r || void 0
-                                  , a = ["eval", "<anonymous>"].indexOf(n[0]) > -1 ? void 0 : n[0];
-                                return new e({
-                                    functionName: o,
-                                    fileName: a,
-                                    lineNumber: n[1],
-                                    columnNumber: n[2],
-                                    source: t
-                                })
-                            }
-                            ), this)
-                        },
-                        parseFFOrSafari: function(t) {
-                            return t.stack.split("\n").filter((function(e) {
-                                return !e.match(i)
-                            }
-                            ), this).map((function(t) {
-                                if (t.indexOf(" > eval") > -1 && (t = t.replace(/ line (\d+)(?: > eval line \d+)* > eval:\d+:\d+/g, ":$1")),
-                                -1 === t.indexOf("@") && -1 === t.indexOf(":"))
-                                    return new e({
-                                        functionName: t
-                                    });
-                                var r = /((.*".+"[^@]*)?[^@]*)(?:@)/
-                                  , i = t.match(r)
-                                  , n = i && i[1] ? i[1] : void 0
-                                  , o = this.extractLocation(t.replace(r, ""));
-                                return new e({
-                                    functionName: n,
-                                    fileName: o[0],
-                                    lineNumber: o[1],
-                                    columnNumber: o[2],
-                                    source: t
-                                })
-                            }
-                            ), this)
-                        },
-                        parseOpera: function(e) {
-                            return !e.stacktrace || e.message.indexOf("\n") > -1 && e.message.split("\n").length > e.stacktrace.split("\n").length ? this.parseOpera9(e) : e.stack ? this.parseOpera11(e) : this.parseOpera10(e)
-                        },
-                        parseOpera9: function(t) {
-                            for (var r = /Line (\d+).*script (?:in )?(\S+)/i, i = t.message.split("\n"), n = [], o = 2, a = i.length; o < a; o += 2) {
-                                var s = r.exec(i[o]);
-                                s && n.push(new e({
-                                    fileName: s[2],
-                                    lineNumber: s[1],
-                                    source: i[o]
-                                }))
-                            }
-                            return n
-                        },
-                        parseOpera10: function(t) {
-                            for (var r = /Line (\d+).*script (?:in )?(\S+)(?:: In function (\S+))?$/i, i = t.stacktrace.split("\n"), n = [], o = 0, a = i.length; o < a; o += 2) {
-                                var s = r.exec(i[o]);
-                                s && n.push(new e({
-                                    functionName: s[3] || void 0,
-                                    fileName: s[2],
-                                    lineNumber: s[1],
-                                    source: i[o]
-                                }))
-                            }
-                            return n
-                        },
-                        parseOpera11: function(r) {
-                            return r.stack.split("\n").filter((function(e) {
-                                return !!e.match(t) && !e.match(/^Error created at/)
-                            }
-                            ), this).map((function(t) {
-                                var r, i = t.split("@"), n = this.extractLocation(i.pop()), o = i.shift() || "", a = o.replace(/<anonymous function(: (\w+))?>/, "$2").replace(/\([^)]*\)/g, "") || void 0;
-                                o.match(/\(([^)]*)\)/) && (r = o.replace(/^[^(]+\(([^)]*)\)$/, "$1"));
-                                var s = void 0 === r || "[arguments not available]" === r ? void 0 : r.split(",");
-                                return new e({
-                                    functionName: a,
-                                    args: s,
-                                    fileName: n[0],
-                                    lineNumber: n[1],
-                                    columnNumber: n[2],
-                                    source: t
-                                })
-                            }
-                            ), this)
-                        }
-                    }
-                }
-                ) ? i.apply(t, n) : i) || (e.exports = o)
-            }()
-        },
-        18: function(e, t) {
-            var r, i, n;
-            !function(o, a) {
-                "use strict";
-                i = [],
-                void 0 === (n = "function" == typeof (r = function() {
-                    function e(e) {
-                        return e.charAt(0).toUpperCase() + e.substring(1)
-                    }
-                    function t(e) {
-                        return function() {
-                            return this[e]
-                        }
-                    }
-                    var r = ["isConstructor", "isEval", "isNative", "isToplevel"]
-                      , i = ["columnNumber", "lineNumber"]
-                      , n = ["fileName", "functionName", "source"]
-                      , o = r.concat(i, n, ["args"], ["evalOrigin"]);
-                    function a(t) {
-                        if (t)
-                            for (var r = 0; r < o.length; r++)
-                                void 0 !== t[o[r]] && this["set" + e(o[r])](t[o[r]])
-                    }
-                    a.prototype = {
-                        getArgs: function() {
-                            return this.args
-                        },
-                        setArgs: function(e) {
-                            if ("[object Array]" !== Object.prototype.toString.call(e))
-                                throw new TypeError("Args must be an Array");
-                            this.args = e
-                        },
-                        getEvalOrigin: function() {
-                            return this.evalOrigin
-                        },
-                        setEvalOrigin: function(e) {
-                            if (e instanceof a)
-                                this.evalOrigin = e;
-                            else {
-                                if (!(e instanceof Object))
-                                    throw new TypeError("Eval Origin must be an Object or StackFrame");
-                                this.evalOrigin = new a(e)
-                            }
-                        },
-                        toString: function() {
-                            var e = this.getFileName() || ""
-                              , t = this.getLineNumber() || ""
-                              , r = this.getColumnNumber() || ""
-                              , i = this.getFunctionName() || "";
-                            return this.getIsEval() ? e ? "[eval] (" + e + ":" + t + ":" + r + ")" : "[eval]:" + t + ":" + r : i ? i + " (" + e + ":" + t + ":" + r + ")" : e + ":" + t + ":" + r
-                        }
-                    },
-                    a.fromString = function(e) {
-                        var t = e.indexOf("(")
-                          , r = e.lastIndexOf(")")
-                          , i = e.substring(0, t)
-                          , n = e.substring(t + 1, r).split(",")
-                          , o = e.substring(r + 1);
-                        if (0 === o.indexOf("@"))
-                            var s = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(o, "")
-                              , c = s[1]
-                              , l = s[2]
-                              , u = s[3];
-                        return new a({
-                            functionName: i,
-                            args: n || void 0,
-                            fileName: c,
-                            lineNumber: l || void 0,
-                            columnNumber: u || void 0
-                        })
-                    }
-                    ;
-                    for (var s = 0; s < r.length; s++)
-                        a.prototype["get" + e(r[s])] = t(r[s]),
-                        a.prototype["set" + e(r[s])] = function(e) {
-                            return function(t) {
-                                this[e] = Boolean(t)
-                            }
-                        }(r[s]);
-                    for (var c = 0; c < i.length; c++)
-                        a.prototype["get" + e(i[c])] = t(i[c]),
-                        a.prototype["set" + e(i[c])] = function(e) {
-                            return function(t) {
-                                if (r = t,
-                                isNaN(parseFloat(r)) || !isFinite(r))
-                                    throw new TypeError(e + " must be a Number");
-                                var r;
-                                this[e] = Number(t)
-                            }
-                        }(i[c]);
-                    for (var l = 0; l < n.length; l++)
-                        a.prototype["get" + e(n[l])] = t(n[l]),
-                        a.prototype["set" + e(n[l])] = function(e) {
-                            return function(t) {
-                                this[e] = String(t)
-                            }
-                        }(n[l]);
-                    return a
-                }
-                ) ? r.apply(t, i) : r) || (e.exports = n)
-            }()
-        },
-        700: function(e, t, r) {
-            var i;
-            !function(n, o) {
-                "use strict";
-                var a = "function"
-                  , s = "undefined"
-                  , c = "object"
-                  , l = "string"
-                  , u = "model"
-                  , d = "name"
-                  , b = "type"
-                  , f = "vendor"
-                  , m = "version"
-                  , p = "architecture"
-                  , w = "console"
-                  , h = "mobile"
-                  , g = "tablet"
-                  , v = "smarttv"
-                  , y = "wearable"
-                  , x = "embedded"
-                  , k = "Amazon"
-                  , S = "Apple"
-                  , O = "ASUS"
-                  , R = "BlackBerry"
-                  , E = "Google"
-                  , N = "Huawei"
-                  , A = "LG"
-                  , T = "Microsoft"
-                  , B = "Motorola"
-                  , L = "Samsung"
-                  , C = "Sharp"
-                  , M = "Sony"
-                  , P = "Xiaomi"
-                  , I = "Zebra"
-                  , U = "Facebook"
-                  , D = "Chromium OS"
-                  , j = "Mac OS"
-                  , F = function(e) {
-                    for (var t = {}, r = 0; r < e.length; r++)
-                        t[e[r].toUpperCase()] = e[r];
-                    return t
-                }
-                  , q = function(e, t) {
-                    return typeof e === l && -1 !== W(t).indexOf(W(e))
-                }
-                  , W = function(e) {
-                    return e.toLowerCase()
-                }
-                  , z = function(e, t) {
-                    if (typeof e === l)
-                        return e = e.replace(/^\s\s*/, ""),
-                        typeof t === s ? e : e.substring(0, 350)
-                }
-                  , V = function(e, t) {
-                    for (var r, i, n, s, l, u, d = 0; d < t.length && !l; ) {
-                        var b = t[d]
-                          , f = t[d + 1];
-                        for (r = i = 0; r < b.length && !l && b[r]; )
-                            if (l = b[r++].exec(e))
-                                for (n = 0; n < f.length; n++)
-                                    u = l[++i],
-                                    typeof (s = f[n]) === c && s.length > 0 ? 2 === s.length ? typeof s[1] == a ? this[s[0]] = s[1].call(this, u) : this[s[0]] = s[1] : 3 === s.length ? typeof s[1] !== a || s[1].exec && s[1].test ? this[s[0]] = u ? u.replace(s[1], s[2]) : o : this[s[0]] = u ? s[1].call(this, u, s[2]) : o : 4 === s.length && (this[s[0]] = u ? s[3].call(this, u.replace(s[1], s[2])) : o) : this[s] = u || o;
-                        d += 2
-                    }
-                }
-                  , _ = function(e, t) {
-                    for (var r in t)
-                        if (typeof t[r] === c && t[r].length > 0) {
-                            for (var i = 0; i < t[r].length; i++)
-                                if (q(t[r][i], e))
-                                    return "?" === r ? o : r
-                        } else if (q(t[r], e))
-                            return "?" === r ? o : r;
-                    return e
-                }
-                  , $ = {
-                    ME: "4.90",
-                    "NT 3.11": "NT3.51",
-                    "NT 4.0": "NT4.0",
-                    2e3: "NT 5.0",
-                    XP: ["NT 5.1", "NT 5.2"],
-                    Vista: "NT 6.0",
-                    7: "NT 6.1",
-                    8: "NT 6.2",
-                    8.1: "NT 6.3",
-                    10: ["NT 6.4", "NT 10.0"],
-                    RT: "ARM"
-                }
-                  , G = {
-                    browser: [[/\b(?:crmo|crios)\/([\w\.]+)/i], [m, [d, "Chrome"]], [/edg(?:e|ios|a)?\/([\w\.]+)/i], [m, [d, "Edge"]], [/(opera mini)\/([-\w\.]+)/i, /(opera [mobiletab]{3,6})\b.+version\/([-\w\.]+)/i, /(opera)(?:.+version\/|[\/ ]+)([\w\.]+)/i], [d, m], [/opios[\/ ]+([\w\.]+)/i], [m, [d, "Opera Mini"]], [/\bopr\/([\w\.]+)/i], [m, [d, "Opera"]], [/(kindle)\/([\w\.]+)/i, /(lunascape|maxthon|netfront|jasmine|blazer)[\/ ]?([\w\.]*)/i, /(avant |iemobile|slim)(?:browser)?[\/ ]?([\w\.]*)/i, /(ba?idubrowser)[\/ ]?([\w\.]+)/i, /(?:ms|\()(ie) ([\w\.]+)/i, /(flock|rockmelt|midori|epiphany|silk|skyfire|ovibrowser|bolt|iron|vivaldi|iridium|phantomjs|bowser|quark|qupzilla|falkon|rekonq|puffin|brave|whale(?!.+naver)|qqbrowserlite|qq|duckduckgo)\/([-\w\.]+)/i, /(weibo)__([\d\.]+)/i], [d, m], [/(?:\buc? ?browser|(?:juc.+)ucweb)[\/ ]?([\w\.]+)/i], [m, [d, "UCBrowser"]], [/microm.+\bqbcore\/([\w\.]+)/i, /\bqbcore\/([\w\.]+).+microm/i], [m, [d, "WeChat(Win) Desktop"]], [/micromessenger\/([\w\.]+)/i], [m, [d, "WeChat"]], [/konqueror\/([\w\.]+)/i], [m, [d, "Konqueror"]], [/trident.+rv[: ]([\w\.]{1,9})\b.+like gecko/i], [m, [d, "IE"]], [/yabrowser\/([\w\.]+)/i], [m, [d, "Yandex"]], [/(avast|avg)\/([\w\.]+)/i], [[d, /(.+)/, "$1 Secure Browser"], m], [/\bfocus\/([\w\.]+)/i], [m, [d, "Firefox Focus"]], [/\bopt\/([\w\.]+)/i], [m, [d, "Opera Touch"]], [/coc_coc\w+\/([\w\.]+)/i], [m, [d, "Coc Coc"]], [/dolfin\/([\w\.]+)/i], [m, [d, "Dolphin"]], [/coast\/([\w\.]+)/i], [m, [d, "Opera Coast"]], [/miuibrowser\/([\w\.]+)/i], [m, [d, "MIUI Browser"]], [/fxios\/([-\w\.]+)/i], [m, [d, "Firefox"]], [/\bqihu|(qi?ho?o?|360)browser/i], [[d, "360 Browser"]], [/(oculus|samsung|sailfish|huawei)browser\/([\w\.]+)/i], [[d, /(.+)/, "$1 Browser"], m], [/(comodo_dragon)\/([\w\.]+)/i], [[d, /_/g, " "], m], [/(electron)\/([\w\.]+) safari/i, /(tesla)(?: qtcarbrowser|\/(20\d\d\.[-\w\.]+))/i, /m?(qqbrowser|baiduboxapp|2345Explorer)[\/ ]?([\w\.]+)/i], [d, m], [/(metasr)[\/ ]?([\w\.]+)/i, /(lbbrowser)/i, /\[(linkedin)app\]/i], [d], [/((?:fban\/fbios|fb_iab\/fb4a)(?!.+fbav)|;fbav\/([\w\.]+);)/i], [[d, U], m], [/(kakao(?:talk|story))[\/ ]([\w\.]+)/i, /(naver)\(.*?(\d+\.[\w\.]+).*\)/i, /safari (line)\/([\w\.]+)/i, /\b(line)\/([\w\.]+)\/iab/i, /(chromium|instagram)[\/ ]([-\w\.]+)/i], [d, m], [/\bgsa\/([\w\.]+) .*safari\//i], [m, [d, "GSA"]], [/headlesschrome(?:\/([\w\.]+)| )/i], [m, [d, "Chrome Headless"]], [/ wv\).+(chrome)\/([\w\.]+)/i], [[d, "Chrome WebView"], m], [/droid.+ version\/([\w\.]+)\b.+(?:mobile safari|safari)/i], [m, [d, "Android Browser"]], [/(chrome|omniweb|arora|[tizenoka]{5} ?browser)\/v?([\w\.]+)/i], [d, m], [/version\/([\w\.\,]+) .*mobile\/\w+ (safari)/i], [m, [d, "Mobile Safari"]], [/version\/([\w(\.|\,)]+) .*(mobile ?safari|safari)/i], [m, d], [/webkit.+?(mobile ?safari|safari)(\/[\w\.]+)/i], [d, [m, _, {
-                        "1.0": "/8",
-                        1.2: "/1",
-                        1.3: "/3",
-                        "2.0": "/412",
-                        "2.0.2": "/416",
-                        "2.0.3": "/417",
-                        "2.0.4": "/419",
-                        "?": "/"
-                    }]], [/(webkit|khtml)\/([\w\.]+)/i], [d, m], [/(navigator|netscape\d?)\/([-\w\.]+)/i], [[d, "Netscape"], m], [/mobile vr; rv:([\w\.]+)\).+firefox/i], [m, [d, "Firefox Reality"]], [/ekiohf.+(flow)\/([\w\.]+)/i, /(swiftfox)/i, /(icedragon|iceweasel|camino|chimera|fennec|maemo browser|minimo|conkeror|klar)[\/ ]?([\w\.\+]+)/i, /(seamonkey|k-meleon|icecat|iceape|firebird|phoenix|palemoon|basilisk|waterfox)\/([-\w\.]+)$/i, /(firefox)\/([\w\.]+)/i, /(mozilla)\/([\w\.]+) .+rv\:.+gecko\/\d+/i, /(polaris|lynx|dillo|icab|doris|amaya|w3m|netsurf|sleipnir|obigo|mosaic|(?:go|ice|up)[\. ]?browser)[-\/ ]?v?([\w\.]+)/i, /(links) \(([\w\.]+)/i, /panasonic;(viera)/i], [d, m], [/(cobalt)\/([\w\.]+)/i], [d, [m, /master.|lts./, ""]]],
-                    cpu: [[/(?:(amd|x(?:(?:86|64)[-_])?|wow|win)64)[;\)]/i], [[p, "amd64"]], [/(ia32(?=;))/i], [[p, W]], [/((?:i[346]|x)86)[;\)]/i], [[p, "ia32"]], [/\b(aarch64|arm(v?8e?l?|_?64))\b/i], [[p, "arm64"]], [/\b(arm(?:v[67])?ht?n?[fl]p?)\b/i], [[p, "armhf"]], [/windows (ce|mobile); ppc;/i], [[p, "arm"]], [/((?:ppc|powerpc)(?:64)?)(?: mac|;|\))/i], [[p, /ower/, "", W]], [/(sun4\w)[;\)]/i], [[p, "sparc"]], [/((?:avr32|ia64(?=;))|68k(?=\))|\barm(?=v(?:[1-7]|[5-7]1)l?|;|eabi)|(?=atmel )avr|(?:irix|mips|sparc)(?:64)?\b|pa-risc)/i], [[p, W]]],
-                    device: [[/\b(sch-i[89]0\d|shw-m380s|sm-[ptx]\w{2,4}|gt-[pn]\d{2,4}|sgh-t8[56]9|nexus 10)/i], [u, [f, L], [b, g]], [/\b((?:s[cgp]h|gt|sm)-\w+|sc[g-]?[\d]+a?|galaxy nexus)/i, /samsung[- ]([-\w]+)/i, /sec-(sgh\w+)/i], [u, [f, L], [b, h]], [/\((ip(?:hone|od)[\w ]*);/i], [u, [f, S], [b, h]], [/\((ipad);[-\w\),; ]+apple/i, /applecoremedia\/[\w\.]+ \((ipad)/i, /\b(ipad)\d\d?,\d\d?[;\]].+ios/i], [u, [f, S], [b, g]], [/(macintosh);/i], [u, [f, S]], [/\b(sh-?[altvz]?\d\d[a-ekm]?)/i], [u, [f, C], [b, h]], [/\b((?:ag[rs][23]?|bah2?|sht?|btv)-a?[lw]\d{2})\b(?!.+d\/s)/i], [u, [f, N], [b, g]], [/(?:huawei|honor)([-\w ]+)[;\)]/i, /\b(nexus 6p|\w{2,4}e?-[atu]?[ln][\dx][012359c][adn]?)\b(?!.+d\/s)/i], [u, [f, N], [b, h]], [/\b(poco[\w ]+)(?: bui|\))/i, /\b; (\w+) build\/hm\1/i, /\b(hm[-_ ]?note?[_ ]?(?:\d\w)?) bui/i, /\b(redmi[\-_ ]?(?:note|k)?[\w_ ]+)(?: bui|\))/i, /\b(mi[-_ ]?(?:a\d|one|one[_ ]plus|note lte|max|cc)?[_ ]?(?:\d?\w?)[_ ]?(?:plus|se|lite)?)(?: bui|\))/i], [[u, /_/g, " "], [f, P], [b, h]], [/\b(mi[-_ ]?(?:pad)(?:[\w_ ]+))(?: bui|\))/i], [[u, /_/g, " "], [f, P], [b, g]], [/; (\w+) bui.+ oppo/i, /\b(cph[12]\d{3}|p(?:af|c[al]|d\w|e[ar])[mt]\d0|x9007|a101op)\b/i], [u, [f, "OPPO"], [b, h]], [/vivo (\w+)(?: bui|\))/i, /\b(v[12]\d{3}\w?[at])(?: bui|;)/i], [u, [f, "Vivo"], [b, h]], [/\b(rmx[12]\d{3})(?: bui|;|\))/i], [u, [f, "Realme"], [b, h]], [/\b(milestone|droid(?:[2-4x]| (?:bionic|x2|pro|razr))?:?( 4g)?)\b[\w ]+build\//i, /\bmot(?:orola)?[- ](\w*)/i, /((?:moto[\w\(\) ]+|xt\d{3,4}|nexus 6)(?= bui|\)))/i], [u, [f, B], [b, h]], [/\b(mz60\d|xoom[2 ]{0,2}) build\//i], [u, [f, B], [b, g]], [/((?=lg)?[vl]k\-?\d{3}) bui| 3\.[-\w; ]{10}lg?-([06cv9]{3,4})/i], [u, [f, A], [b, g]], [/(lm(?:-?f100[nv]?|-[\w\.]+)(?= bui|\))|nexus [45])/i, /\blg[-e;\/ ]+((?!browser|netcast|android tv)\w+)/i, /\blg-?([\d\w]+) bui/i], [u, [f, A], [b, h]], [/(ideatab[-\w ]+)/i, /lenovo ?(s[56]000[-\w]+|tab(?:[\w ]+)|yt[-\d\w]{6}|tb[-\d\w]{6})/i], [u, [f, "Lenovo"], [b, g]], [/(?:maemo|nokia).*(n900|lumia \d+)/i, /nokia[-_ ]?([-\w\.]*)/i], [[u, /_/g, " "], [f, "Nokia"], [b, h]], [/(pixel c)\b/i], [u, [f, E], [b, g]], [/droid.+; (pixel[\daxl ]{0,6})(?: bui|\))/i], [u, [f, E], [b, h]], [/droid.+ (a?\d[0-2]{2}so|[c-g]\d{4}|so[-gl]\w+|xq-a\w[4-7][12])(?= bui|\).+chrome\/(?![1-6]{0,1}\d\.))/i], [u, [f, M], [b, h]], [/sony tablet [ps]/i, /\b(?:sony)?sgp\w+(?: bui|\))/i], [[u, "Xperia Tablet"], [f, M], [b, g]], [/ (kb2005|in20[12]5|be20[12][59])\b/i, /(?:one)?(?:plus)? (a\d0\d\d)(?: b|\))/i], [u, [f, "OnePlus"], [b, h]], [/(alexa)webm/i, /(kf[a-z]{2}wi)( bui|\))/i, /(kf[a-z]+)( bui|\)).+silk\//i], [u, [f, k], [b, g]], [/((?:sd|kf)[0349hijorstuw]+)( bui|\)).+silk\//i], [[u, /(.+)/g, "Fire Phone $1"], [f, k], [b, h]], [/(playbook);[-\w\),; ]+(rim)/i], [u, f, [b, g]], [/\b((?:bb[a-f]|st[hv])100-\d)/i, /\(bb10; (\w+)/i], [u, [f, R], [b, h]], [/(?:\b|asus_)(transfo[prime ]{4,10} \w+|eeepc|slider \w+|nexus 7|padfone|p00[cj])/i], [u, [f, O], [b, g]], [/ (z[bes]6[027][012][km][ls]|zenfone \d\w?)\b/i], [u, [f, O], [b, h]], [/(nexus 9)/i], [u, [f, "HTC"], [b, g]], [/(htc)[-;_ ]{1,2}([\w ]+(?=\)| bui)|\w+)/i, /(zte)[- ]([\w ]+?)(?: bui|\/|\))/i, /(alcatel|geeksphone|nexian|panasonic(?!(?:;|\.))|sony(?!-bra))[-_ ]?([-\w]*)/i], [f, [u, /_/g, " "], [b, h]], [/droid.+; ([ab][1-7]-?[0178a]\d\d?)/i], [u, [f, "Acer"], [b, g]], [/droid.+; (m[1-5] note) bui/i, /\bmz-([-\w]{2,})/i], [u, [f, "Meizu"], [b, h]], [/(blackberry|benq|palm(?=\-)|sonyericsson|acer|asus|dell|meizu|motorola|polytron)[-_ ]?([-\w]*)/i, /(hp) ([\w ]+\w)/i, /(asus)-?(\w+)/i, /(microsoft); (lumia[\w ]+)/i, /(lenovo)[-_ ]?([-\w]+)/i, /(jolla)/i, /(oppo) ?([\w ]+) bui/i], [f, u, [b, h]], [/(kobo)\s(ereader|touch)/i, /(archos) (gamepad2?)/i, /(hp).+(touchpad(?!.+tablet)|tablet)/i, /(kindle)\/([\w\.]+)/i, /(nook)[\w ]+build\/(\w+)/i, /(dell) (strea[kpr\d ]*[\dko])/i, /(le[- ]+pan)[- ]+(\w{1,9}) bui/i, /(trinity)[- ]*(t\d{3}) bui/i, /(gigaset)[- ]+(q\w{1,9}) bui/i, /(vodafone) ([\w ]+)(?:\)| bui)/i], [f, u, [b, g]], [/(surface duo)/i], [u, [f, T], [b, g]], [/droid [\d\.]+; (fp\du?)(?: b|\))/i], [u, [f, "Fairphone"], [b, h]], [/(u304aa)/i], [u, [f, "AT&T"], [b, h]], [/\bsie-(\w*)/i], [u, [f, "Siemens"], [b, h]], [/\b(rct\w+) b/i], [u, [f, "RCA"], [b, g]], [/\b(venue[\d ]{2,7}) b/i], [u, [f, "Dell"], [b, g]], [/\b(q(?:mv|ta)\w+) b/i], [u, [f, "Verizon"], [b, g]], [/\b(?:barnes[& ]+noble |bn[rt])([\w\+ ]*) b/i], [u, [f, "Barnes & Noble"], [b, g]], [/\b(tm\d{3}\w+) b/i], [u, [f, "NuVision"], [b, g]], [/\b(k88) b/i], [u, [f, "ZTE"], [b, g]], [/\b(nx\d{3}j) b/i], [u, [f, "ZTE"], [b, h]], [/\b(gen\d{3}) b.+49h/i], [u, [f, "Swiss"], [b, h]], [/\b(zur\d{3}) b/i], [u, [f, "Swiss"], [b, g]], [/\b((zeki)?tb.*\b) b/i], [u, [f, "Zeki"], [b, g]], [/\b([yr]\d{2}) b/i, /\b(dragon[- ]+touch |dt)(\w{5}) b/i], [[f, "Dragon Touch"], u, [b, g]], [/\b(ns-?\w{0,9}) b/i], [u, [f, "Insignia"], [b, g]], [/\b((nxa|next)-?\w{0,9}) b/i], [u, [f, "NextBook"], [b, g]], [/\b(xtreme\_)?(v(1[045]|2[015]|[3469]0|7[05])) b/i], [[f, "Voice"], u, [b, h]], [/\b(lvtel\-)?(v1[12]) b/i], [[f, "LvTel"], u, [b, h]], [/\b(ph-1) /i], [u, [f, "Essential"], [b, h]], [/\b(v(100md|700na|7011|917g).*\b) b/i], [u, [f, "Envizen"], [b, g]], [/\b(trio[-\w\. ]+) b/i], [u, [f, "MachSpeed"], [b, g]], [/\btu_(1491) b/i], [u, [f, "Rotor"], [b, g]], [/(shield[\w ]+) b/i], [u, [f, "Nvidia"], [b, g]], [/(sprint) (\w+)/i], [f, u, [b, h]], [/(kin\.[onetw]{3})/i], [[u, /\./g, " "], [f, T], [b, h]], [/droid.+; (cc6666?|et5[16]|mc[239][23]x?|vc8[03]x?)\)/i], [u, [f, I], [b, g]], [/droid.+; (ec30|ps20|tc[2-8]\d[kx])\)/i], [u, [f, I], [b, h]], [/smart-tv.+(samsung)/i], [f, [b, v]], [/hbbtv.+maple;(\d+)/i], [[u, /^/, "SmartTV"], [f, L], [b, v]], [/(nux; netcast.+smarttv|lg (netcast\.tv-201\d|android tv))/i], [[f, A], [b, v]], [/(apple) ?tv/i], [f, [u, "Apple TV"], [b, v]], [/crkey/i], [[u, "Chromecast"], [f, E], [b, v]], [/droid.+aft(\w)( bui|\))/i], [u, [f, k], [b, v]], [/\(dtv[\);].+(aquos)/i, /(aquos-tv[\w ]+)\)/i], [u, [f, C], [b, v]], [/(bravia[\w ]+)( bui|\))/i], [u, [f, M], [b, v]], [/(mitv-\w{5}) bui/i], [u, [f, P], [b, v]], [/Hbbtv.*(technisat) (.*);/i], [f, u, [b, v]], [/\b(roku)[\dx]*[\)\/]((?:dvp-)?[\d\.]*)/i, /hbbtv\/\d+\.\d+\.\d+ +\([\w\+ ]*; *([\w\d][^;]*);([^;]*)/i], [[f, z], [u, z], [b, v]], [/\b(android tv|smart[- ]?tv|opera tv|tv; rv:)\b/i], [[b, v]], [/(ouya)/i, /(nintendo) ([wids3utch]+)/i], [f, u, [b, w]], [/droid.+; (shield) bui/i], [u, [f, "Nvidia"], [b, w]], [/(playstation [345portablevi]+)/i], [u, [f, M], [b, w]], [/\b(xbox(?: one)?(?!; xbox))[\); ]/i], [u, [f, T], [b, w]], [/((pebble))app/i], [f, u, [b, y]], [/(watch)(?: ?os[,\/]|\d,\d\/)[\d\.]+/i], [u, [f, S], [b, y]], [/droid.+; (glass) \d/i], [u, [f, E], [b, y]], [/droid.+; (wt63?0{2,3})\)/i], [u, [f, I], [b, y]], [/(quest( 2| pro)?)/i], [u, [f, U], [b, y]], [/(tesla)(?: qtcarbrowser|\/[-\w\.]+)/i], [f, [b, x]], [/droid .+?; ([^;]+?)(?: bui|\) applew).+? mobile safari/i], [u, [b, h]], [/droid .+?; ([^;]+?)(?: bui|\) applew).+?(?! mobile) safari/i], [u, [b, g]], [/\b((tablet|tab)[;\/]|focus\/\d(?!.+mobile))/i], [[b, g]], [/(phone|mobile(?:[;\/]| [ \w\/\.]*safari)|pda(?=.+windows ce))/i], [[b, h]], [/(android[-\w\. ]{0,9});.+buil/i], [u, [f, "Generic"]]],
-                    engine: [[/windows.+ edge\/([\w\.]+)/i], [m, [d, "EdgeHTML"]], [/webkit\/537\.36.+chrome\/(?!27)([\w\.]+)/i], [m, [d, "Blink"]], [/(presto)\/([\w\.]+)/i, /(webkit|trident|netfront|netsurf|amaya|lynx|w3m|goanna)\/([\w\.]+)/i, /ekioh(flow)\/([\w\.]+)/i, /(khtml|tasman|links)[\/ ]\(?([\w\.]+)/i, /(icab)[\/ ]([23]\.[\d\.]+)/i], [d, m], [/rv\:([\w\.]{1,9})\b.+(gecko)/i], [m, d]],
-                    os: [[/microsoft (windows) (vista|xp)/i], [d, m], [/(windows) nt 6\.2; (arm)/i, /(windows (?:phone(?: os)?|mobile))[\/ ]?([\d\.\w ]*)/i, /(windows)[\/ ]?([ntce\d\. ]+\w)(?!.+xbox)/i], [d, [m, _, $]], [/(win(?=3|9|n)|win 9x )([nt\d\.]+)/i], [[d, "Windows"], [m, _, $]], [/ip[honead]{2,4}\b(?:.*os ([\w]+) like mac|; opera)/i, /cfnetwork\/.+darwin/i], [[m, /_/g, "."], [d, "iOS"]], [/(mac os x) ?([\w\. ]*)/i, /(macintosh|mac_powerpc\b)(?!.+haiku)/i], [[d, j], [m, /_/g, "."]], [/droid ([\w\.]+)\b.+(android[- ]x86|harmonyos)/i], [m, d], [/(android|webos|qnx|bada|rim tablet os|maemo|meego|sailfish)[-\/ ]?([\w\.]*)/i, /(blackberry)\w*\/([\w\.]*)/i, /(tizen|kaios)[\/ ]([\w\.]+)/i, /\((series40);/i], [d, m], [/\(bb(10);/i], [m, [d, R]], [/(?:symbian ?os|symbos|s60(?=;)|series60)[-\/ ]?([\w\.]*)/i], [m, [d, "Symbian"]], [/mozilla\/[\d\.]+ \((?:mobile|tablet|tv|mobile; [\w ]+); rv:.+ gecko\/([\w\.]+)/i], [m, [d, "Firefox OS"]], [/web0s;.+rt(tv)/i, /\b(?:hp)?wos(?:browser)?\/([\w\.]+)/i], [m, [d, "webOS"]], [/watch(?: ?os[,\/]|\d,\d\/)([\d\.]+)/i], [m, [d, "watchOS"]], [/crkey\/([\d\.]+)/i], [m, [d, "Chromecast"]], [/(cros) [\w]+(?:\)| ([\w\.]+)\b)/i], [[d, D], m], [/panasonic;(viera)/i, /(netrange)mmh/i, /(nettv)\/(\d+\.[\w\.]+)/i, /(nintendo|playstation) ([wids345portablevuch]+)/i, /(xbox); +xbox ([^\);]+)/i, /\b(joli|palm)\b ?(?:os)?\/?([\w\.]*)/i, /(mint)[\/\(\) ]?(\w*)/i, /(mageia|vectorlinux)[; ]/i, /([kxln]?ubuntu|debian|suse|opensuse|gentoo|arch(?= linux)|slackware|fedora|mandriva|centos|pclinuxos|red ?hat|zenwalk|linpus|raspbian|plan 9|minix|risc os|contiki|deepin|manjaro|elementary os|sabayon|linspire)(?: gnu\/linux)?(?: enterprise)?(?:[- ]linux)?(?:-gnu)?[-\/ ]?(?!chrom|package)([-\w\.]*)/i, /(hurd|linux) ?([\w\.]*)/i, /(gnu) ?([\w\.]*)/i, /\b([-frentopcghs]{0,5}bsd|dragonfly)[\/ ]?(?!amd|[ix346]{1,2}86)([\w\.]*)/i, /(haiku) (\w+)/i], [d, m], [/(sunos) ?([\w\.\d]*)/i], [[d, "Solaris"], m], [/((?:open)?solaris)[-\/ ]?([\w\.]*)/i, /(aix) ((\d)(?=\.|\)| )[\w\.])*/i, /\b(beos|os\/2|amigaos|morphos|openvms|fuchsia|hp-ux)/i, /(unix) ?([\w\.]*)/i], [d, m]]
-                }
-                  , H = function(e, t) {
-                    if (typeof e === c && (t = e,
-                    e = o),
-                    !(this instanceof H))
-                        return new H(e,t).getResult();
-                    var r = typeof n !== s && n.navigator ? n.navigator : o
-                      , i = e || (r && r.userAgent ? r.userAgent : "")
-                      , u = r && r.userAgentData ? r.userAgentData : o
-                      , d = t ? function(e, t) {
-                        var r = {};
-                        for (var i in e)
-                            t[i] && t[i].length % 2 == 0 ? r[i] = t[i].concat(e[i]) : r[i] = e[i];
-                        return r
-                    }(G, t) : G;
-                    return this.getBrowser = function() {
-                        var e, t = {};
-                        return t.name = o,
-                        t.version = o,
-                        V.call(t, i, d.browser),
-                        t.major = typeof (e = t.version) === l ? e.replace(/[^\d\.]/g, "").split(".")[0] : o,
-                        r && r.brave && typeof r.brave.isBrave == a && (t.name = "Brave"),
-                        t
-                    }
-                    ,
-                    this.getCPU = function() {
-                        var e = {};
-                        return e.architecture = o,
-                        V.call(e, i, d.cpu),
-                        e
-                    }
-                    ,
-                    this.getDevice = function() {
-                        var e = {};
-                        return e.vendor = o,
-                        e.model = o,
-                        e.type = o,
-                        V.call(e, i, d.device),
-                        !e.type && u && u.mobile && (e.type = h),
-                        "Macintosh" == e.model && r && typeof r.standalone !== s && r.maxTouchPoints && r.maxTouchPoints > 2 && (e.model = "iPad",
-                        e.type = g),
-                        e
-                    }
-                    ,
-                    this.getEngine = function() {
-                        var e = {};
-                        return e.name = o,
-                        e.version = o,
-                        V.call(e, i, d.engine),
-                        e
-                    }
-                    ,
-                    this.getOS = function() {
-                        var e = {};
-                        return e.name = o,
-                        e.version = o,
-                        V.call(e, i, d.os),
-                        !e.name && u && "Unknown" != u.platform && (e.name = u.platform.replace(/chrome os/i, D).replace(/macos/i, j)),
-                        e
-                    }
-                    ,
-                    this.getResult = function() {
-                        return {
-                            ua: this.getUA(),
-                            browser: this.getBrowser(),
-                            engine: this.getEngine(),
-                            os: this.getOS(),
-                            device: this.getDevice(),
-                            cpu: this.getCPU()
-                        }
-                    }
-                    ,
-                    this.getUA = function() {
-                        return i
-                    }
-                    ,
-                    this.setUA = function(e) {
-                        return i = typeof e === l && e.length > 350 ? z(e, 350) : e,
-                        this
-                    }
-                    ,
-                    this.setUA(i),
-                    this
-                };
-                H.VERSION = "1.0.34",
-                H.BROWSER = F([d, m, "major"]),
-                H.CPU = F([p]),
-                H.DEVICE = F([u, f, b, w, h, v, g, y, x]),
-                H.ENGINE = H.OS = F([d, m]),
-                typeof t !== s ? (e.exports && (t = e.exports = H),
-                t.UAParser = H) : r.amdO ? (i = function() {
-                    return H
-                }
-                .call(t, r, t, e)) === o || (e.exports = i) : typeof n !== s && (n.UAParser = H);
-                var X = typeof n !== s && (n.jQuery || n.Zepto);
-                if (X && !X.ua) {
-                    var Y = new H;
-                    X.ua = Y.getResult(),
-                    X.ua.get = function() {
-                        return Y.getUA()
-                    }
-                    ,
-                    X.ua.set = function(e) {
-                        Y.setUA(e);
-                        var t = Y.getResult();
-                        for (var r in t)
-                            X.ua[r] = t[r]
-                    }
-                }
-            }("object" == typeof window ? window : this)
-        }
-    }
-      , t = {};
-    function r(i) {
-        var n = t[i];
-        if (void 0 !== n)
-            return n.exports;
-        var o = t[i] = {
-            exports: {}
-        };
-        return e[i].call(o.exports, o, o.exports, r),
-        o.exports
-    }
-    r.amdO = {},
-    (()=>{
+window["webpackJsonp.TiktTokAnalytics"] = window["webpackJsonp.TiktTokAnalytics"] || []).push([[1], {
+    "6rls": function(d, $, t) {
         "use strict";
-        const e = Symbol.for("RemoteUi::Retain")
-          , t = Symbol.for("RemoteUi::Release")
-          , i = Symbol.for("RemoteUi::RetainedBy");
-        class n {
-            constructor() {
-                this.memoryManaged = new Set
+        t.r($),
+        t.d($, "sha256", function() {
+            return e.sha256
+        }),
+        t.d($, "parsePhoneNumberFromString", function() {
+            return Od
+        }),
+        t.d($, "checkEmailFormat", function() {
+            return Pd.a
+        }),
+        t.d($, "checkMDNEmailFormat", function() {
+            return Pd.b
+        });
+        var e = t("bCcq")
+          , n = {
+            version: 4,
+            country_calling_codes: {
+                1: ["US", "AG", "AI", "AS", "BB", "BM", "BS", "CA", "DM", "DO", "GD", "GU", "JM", "KN", "KY", "LC", "MP", "MS", "PR", "SX", "TC", "TT", "VC", "VG", "VI"],
+                7: ["RU", "KZ"],
+                20: ["EG"],
+                27: ["ZA"],
+                30: ["GR"],
+                31: ["NL"],
+                32: ["BE"],
+                33: ["FR"],
+                34: ["ES"],
+                36: ["HU"],
+                39: ["IT", "VA"],
+                40: ["RO"],
+                41: ["CH"],
+                43: ["AT"],
+                44: ["GB", "GG", "IM", "JE"],
+                45: ["DK"],
+                46: ["SE"],
+                47: ["NO", "SJ"],
+                48: ["PL"],
+                49: ["DE"],
+                51: ["PE"],
+                52: ["MX"],
+                53: ["CU"],
+                54: ["AR"],
+                55: ["BR"],
+                56: ["CL"],
+                57: ["CO"],
+                58: ["VE"],
+                60: ["MY"],
+                61: ["AU", "CC", "CX"],
+                62: ["ID"],
+                63: ["PH"],
+                64: ["NZ"],
+                65: ["SG"],
+                66: ["TH"],
+                81: ["JP"],
+                82: ["KR"],
+                84: ["VN"],
+                86: ["CN"],
+                90: ["TR"],
+                91: ["IN"],
+                92: ["PK"],
+                93: ["AF"],
+                94: ["LK"],
+                95: ["MM"],
+                98: ["IR"],
+                211: ["SS"],
+                212: ["MA", "EH"],
+                213: ["DZ"],
+                216: ["TN"],
+                218: ["LY"],
+                220: ["GM"],
+                221: ["SN"],
+                222: ["MR"],
+                223: ["ML"],
+                224: ["GN"],
+                225: ["CI"],
+                226: ["BF"],
+                227: ["NE"],
+                228: ["TG"],
+                229: ["BJ"],
+                230: ["MU"],
+                231: ["LR"],
+                232: ["SL"],
+                233: ["GH"],
+                234: ["NG"],
+                235: ["TD"],
+                236: ["CF"],
+                237: ["CM"],
+                238: ["CV"],
+                239: ["ST"],
+                240: ["GQ"],
+                241: ["GA"],
+                242: ["CG"],
+                243: ["CD"],
+                244: ["AO"],
+                245: ["GW"],
+                246: ["IO"],
+                247: ["AC"],
+                248: ["SC"],
+                249: ["SD"],
+                250: ["RW"],
+                251: ["ET"],
+                252: ["SO"],
+                253: ["DJ"],
+                254: ["KE"],
+                255: ["TZ"],
+                256: ["UG"],
+                257: ["BI"],
+                258: ["MZ"],
+                260: ["ZM"],
+                261: ["MG"],
+                262: ["RE", "YT"],
+                263: ["ZW"],
+                264: ["NA"],
+                265: ["MW"],
+                266: ["LS"],
+                267: ["BW"],
+                268: ["SZ"],
+                269: ["KM"],
+                290: ["SH", "TA"],
+                291: ["ER"],
+                297: ["AW"],
+                298: ["FO"],
+                299: ["GL"],
+                350: ["GI"],
+                351: ["PT"],
+                352: ["LU"],
+                353: ["IE"],
+                354: ["IS"],
+                355: ["AL"],
+                356: ["MT"],
+                357: ["CY"],
+                358: ["FI", "AX"],
+                359: ["BG"],
+                370: ["LT"],
+                371: ["LV"],
+                372: ["EE"],
+                373: ["MD"],
+                374: ["AM"],
+                375: ["BY"],
+                376: ["AD"],
+                377: ["MC"],
+                378: ["SM"],
+                380: ["UA"],
+                381: ["RS"],
+                382: ["ME"],
+                383: ["XK"],
+                385: ["HR"],
+                386: ["SI"],
+                387: ["BA"],
+                389: ["MK"],
+                420: ["CZ"],
+                421: ["SK"],
+                423: ["LI"],
+                500: ["FK"],
+                501: ["BZ"],
+                502: ["GT"],
+                503: ["SV"],
+                504: ["HN"],
+                505: ["NI"],
+                506: ["CR"],
+                507: ["PA"],
+                508: ["PM"],
+                509: ["HT"],
+                590: ["GP", "BL", "MF"],
+                591: ["BO"],
+                592: ["GY"],
+                593: ["EC"],
+                594: ["GF"],
+                595: ["PY"],
+                596: ["MQ"],
+                597: ["SR"],
+                598: ["UY"],
+                599: ["CW", "BQ"],
+                670: ["TL"],
+                672: ["NF"],
+                673: ["BN"],
+                674: ["NR"],
+                675: ["PG"],
+                676: ["TO"],
+                677: ["SB"],
+                678: ["VU"],
+                679: ["FJ"],
+                680: ["PW"],
+                681: ["WF"],
+                682: ["CK"],
+                683: ["NU"],
+                685: ["WS"],
+                686: ["KI"],
+                687: ["NC"],
+                688: ["TV"],
+                689: ["PF"],
+                690: ["TK"],
+                691: ["FM"],
+                692: ["MH"],
+                850: ["KP"],
+                852: ["HK"],
+                853: ["MO"],
+                855: ["KH"],
+                856: ["LA"],
+                880: ["BD"],
+                886: ["TW"],
+                960: ["MV"],
+                961: ["LB"],
+                962: ["JO"],
+                963: ["SY"],
+                964: ["IQ"],
+                965: ["KW"],
+                966: ["SA"],
+                967: ["YE"],
+                968: ["OM"],
+                970: ["PS"],
+                971: ["AE"],
+                972: ["IL"],
+                973: ["BH"],
+                974: ["QA"],
+                975: ["BT"],
+                976: ["MN"],
+                977: ["NP"],
+                992: ["TJ"],
+                993: ["TM"],
+                994: ["AZ"],
+                995: ["GE"],
+                996: ["KG"],
+                998: ["UZ"]
+            },
+            countries: {
+                AC: ["247", "00", "(?:[01589]\\d|[46])\\d{4}", [5, 6]],
+                AD: ["376", "00", "(?:1|6\\d)\\d{7}|[135-9]\\d{5}", [6, 8, 9], [["(\\d{3})(\\d{3})", "$1 $2", ["[135-9]"]], ["(\\d{4})(\\d{4})", "$1 $2", ["1"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["6"]]]],
+                AE: ["971", "00", "(?:[4-7]\\d|9[0-689])\\d{7}|800\\d{2,9}|[2-4679]\\d{7}", [5, 6, 7, 8, 9, 10, 11, 12], [["(\\d{3})(\\d{2,9})", "$1 $2", ["60|8"]], ["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["[236]|[479][2-8]"], "0$1"], ["(\\d{3})(\\d)(\\d{5})", "$1 $2 $3", ["[479]"]], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["5"], "0$1"]], "0"],
+                AF: ["93", "00", "[2-7]\\d{8}", [9], [["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[2-7]"], "0$1"]], "0"],
+                AG: ["1", "011", "(?:268|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([457]\\d{6})$", "268$1", 0, "268"],
+                AI: ["1", "011", "(?:264|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2457]\\d{6})$", "264$1", 0, "264"],
+                AL: ["355", "00", "(?:700\\d\\d|900)\\d{3}|8\\d{5,7}|(?:[2-5]|6\\d)\\d{7}", [6, 7, 8, 9], [["(\\d{3})(\\d{3,4})", "$1 $2", ["80|9"], "0$1"], ["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["4[2-6]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[2358][2-5]|4"], "0$1"], ["(\\d{3})(\\d{5})", "$1 $2", ["[23578]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["6"], "0$1"]], "0"],
+                AM: ["374", "00", "(?:[1-489]\\d|55|60|77)\\d{6}", [8], [["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["[89]0"], "0 $1"], ["(\\d{3})(\\d{5})", "$1 $2", ["2|3[12]"], "(0$1)"], ["(\\d{2})(\\d{6})", "$1 $2", ["1|47"], "(0$1)"], ["(\\d{2})(\\d{6})", "$1 $2", ["[3-9]"], "0$1"]], "0"],
+                AO: ["244", "00", "[29]\\d{8}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[29]"]]]],
+                AR: ["54", "00", "(?:11|[89]\\d\\d)\\d{8}|[2368]\\d{9}", [10, 11], [["(\\d{4})(\\d{2})(\\d{4})", "$1 $2-$3", ["2(?:2[024-9]|3[0-59]|47|6[245]|9[02-8])|3(?:3[28]|4[03-9]|5[2-46-8]|7[1-578]|8[2-9])", "2(?:[23]02|6(?:[25]|4[6-8])|9(?:[02356]|4[02568]|72|8[23]))|3(?:3[28]|4(?:[04679]|3[5-8]|5[4-68]|8[2379])|5(?:[2467]|3[237]|8[2-5])|7[1-578]|8(?:[2469]|3[2578]|5[4-8]|7[36-8]|8[5-8]))|2(?:2[24-9]|3[1-59]|47)", "2(?:[23]02|6(?:[25]|4(?:64|[78]))|9(?:[02356]|4(?:[0268]|5[2-6])|72|8[23]))|3(?:3[28]|4(?:[04679]|3[78]|5(?:4[46]|8)|8[2379])|5(?:[2467]|3[237]|8[23])|7[1-578]|8(?:[2469]|3[278]|5[56][46]|86[3-6]))|2(?:2[24-9]|3[1-59]|47)|38(?:[58][78]|7[378])|3(?:4[35][56]|58[45]|8(?:[38]5|54|76))[4-6]", "2(?:[23]02|6(?:[25]|4(?:64|[78]))|9(?:[02356]|4(?:[0268]|5[2-6])|72|8[23]))|3(?:3[28]|4(?:[04679]|3(?:5(?:4[0-25689]|[56])|[78])|58|8[2379])|5(?:[2467]|3[237]|8(?:[23]|4(?:[45]|60)|5(?:4[0-39]|5|64)))|7[1-578]|8(?:[2469]|3[278]|54(?:4|5[13-7]|6[89])|86[3-6]))|2(?:2[24-9]|3[1-59]|47)|38(?:[58][78]|7[378])|3(?:454|85[56])[46]|3(?:4(?:36|5[56])|8(?:[38]5|76))[4-6]"], "0$1", 1], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2-$3", ["1"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1-$2-$3", ["[68]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2-$3", ["[23]"], "0$1", 1], ["(\\d)(\\d{4})(\\d{2})(\\d{4})", "$2 15-$3-$4", ["9(?:2[2-469]|3[3-578])", "9(?:2(?:2[024-9]|3[0-59]|47|6[245]|9[02-8])|3(?:3[28]|4[03-9]|5[2-46-8]|7[1-578]|8[2-9]))", "9(?:2(?:[23]02|6(?:[25]|4[6-8])|9(?:[02356]|4[02568]|72|8[23]))|3(?:3[28]|4(?:[04679]|3[5-8]|5[4-68]|8[2379])|5(?:[2467]|3[237]|8[2-5])|7[1-578]|8(?:[2469]|3[2578]|5[4-8]|7[36-8]|8[5-8])))|92(?:2[24-9]|3[1-59]|47)", "9(?:2(?:[23]02|6(?:[25]|4(?:64|[78]))|9(?:[02356]|4(?:[0268]|5[2-6])|72|8[23]))|3(?:3[28]|4(?:[04679]|3[78]|5(?:4[46]|8)|8[2379])|5(?:[2467]|3[237]|8[23])|7[1-578]|8(?:[2469]|3[278]|5(?:[56][46]|[78])|7[378]|8(?:6[3-6]|[78]))))|92(?:2[24-9]|3[1-59]|47)|93(?:4[35][56]|58[45]|8(?:[38]5|54|76))[4-6]", "9(?:2(?:[23]02|6(?:[25]|4(?:64|[78]))|9(?:[02356]|4(?:[0268]|5[2-6])|72|8[23]))|3(?:3[28]|4(?:[04679]|3(?:5(?:4[0-25689]|[56])|[78])|5(?:4[46]|8)|8[2379])|5(?:[2467]|3[237]|8(?:[23]|4(?:[45]|60)|5(?:4[0-39]|5|64)))|7[1-578]|8(?:[2469]|3[278]|5(?:4(?:4|5[13-7]|6[89])|[56][46]|[78])|7[378]|8(?:6[3-6]|[78]))))|92(?:2[24-9]|3[1-59]|47)|93(?:4(?:36|5[56])|8(?:[38]5|76))[4-6]"], "0$1", 0, "$1 $2 $3-$4"], ["(\\d)(\\d{2})(\\d{4})(\\d{4})", "$2 15-$3-$4", ["91"], "0$1", 0, "$1 $2 $3-$4"], ["(\\d{3})(\\d{3})(\\d{5})", "$1-$2-$3", ["8"], "0$1"], ["(\\d)(\\d{3})(\\d{3})(\\d{4})", "$2 15-$3-$4", ["9"], "0$1", 0, "$1 $2 $3-$4"]], "0", 0, "0?(?:(11|2(?:2(?:02?|[13]|2[13-79]|4[1-6]|5[2457]|6[124-8]|7[1-4]|8[13-6]|9[1267])|3(?:02?|1[467]|2[03-6]|3[13-8]|[49][2-6]|5[2-8]|[67])|4(?:7[3-578]|9)|6(?:[0136]|2[24-6]|4[6-8]?|5[15-8])|80|9(?:0[1-3]|[19]|2\\d|3[1-6]|4[02568]?|5[2-4]|6[2-46]|72?|8[23]?))|3(?:3(?:2[79]|6|8[2578])|4(?:0[0-24-9]|[12]|3[5-8]?|4[24-7]|5[4-68]?|6[02-9]|7[126]|8[2379]?|9[1-36-8])|5(?:1|2[1245]|3[237]?|4[1-46-9]|6[2-4]|7[1-6]|8[2-5]?)|6[24]|7(?:[069]|1[1568]|2[15]|3[145]|4[13]|5[14-8]|7[2-57]|8[126])|8(?:[01]|2[15-7]|3[2578]?|4[13-6]|5[4-8]?|6[1-357-9]|7[36-8]?|8[5-8]?|9[124])))15)?", "9$1"],
+                AS: ["1", "011", "(?:[58]\\d\\d|684|900)\\d{7}", [10], 0, "1", 0, "1|([267]\\d{6})$", "684$1", 0, "684"],
+                AT: ["43", "00", "1\\d{3,12}|2\\d{6,12}|43(?:(?:0\\d|5[02-9])\\d{3,9}|2\\d{4,5}|[3467]\\d{4}|8\\d{4,6}|9\\d{4,7})|5\\d{4,12}|8\\d{7,12}|9\\d{8,12}|(?:[367]\\d|4[0-24-9])\\d{4,11}", [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [["(\\d)(\\d{3,12})", "$1 $2", ["1(?:11|[2-9])"], "0$1"], ["(\\d{3})(\\d{2})", "$1 $2", ["517"], "0$1"], ["(\\d{2})(\\d{3,5})", "$1 $2", ["5[079]"], "0$1"], ["(\\d{3})(\\d{3,10})", "$1 $2", ["(?:31|4)6|51|6(?:5[0-3579]|[6-9])|7(?:20|32|8)|[89]"], "0$1"], ["(\\d{4})(\\d{3,9})", "$1 $2", ["[2-467]|5[2-6]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["5"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4,7})", "$1 $2 $3", ["5"], "0$1"]], "0"],
+                AU: ["61", "001[14-689]|14(?:1[14]|34|4[17]|[56]6|7[47]|88)0011", "1(?:[0-79]\\d{7,8}|8[0-24-9]\\d{7})|[2-478]\\d{8}|1\\d{4,7}", [5, 6, 7, 8, 9, 10], [["(\\d{2})(\\d{3,4})", "$1 $2", ["16"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2,4})", "$1 $2 $3", ["16"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["14|4"], "0$1"], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["[2378]"], "(0$1)"], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1(?:30|[89])"]]], "0", 0, "0|(183[12])", 0, 0, 0, [["(?:(?:2(?:[0-26-9]\\d|3[0-8]|4[02-9]|5[0135-9])|3(?:[0-3589]\\d|4[0-578]|6[1-9]|7[0-35-9])|7(?:[013-57-9]\\d|2[0-8]))\\d{3}|8(?:51(?:0(?:0[03-9]|[12479]\\d|3[2-9]|5[0-8]|6[1-9]|8[0-7])|1(?:[0235689]\\d|1[0-69]|4[0-589]|7[0-47-9])|2(?:0[0-79]|[18][13579]|2[14-9]|3[0-46-9]|[4-6]\\d|7[89]|9[0-4]))|(?:6[0-8]|[78]\\d)\\d{3}|9(?:[02-9]\\d{3}|1(?:(?:[0-58]\\d|6[0135-9])\\d|7(?:0[0-24-9]|[1-9]\\d)|9(?:[0-46-9]\\d|5[0-79])))))\\d{3}", [9]], ["4(?:83[0-38]|93[0-4])\\d{5}|4(?:[0-3]\\d|4[047-9]|5[0-25-9]|6[06-9]|7[02-9]|8[0-24-9]|9[0-27-9])\\d{6}", [9]], ["180(?:0\\d{3}|2)\\d{3}", [7, 10]], ["190[0-26]\\d{6}", [10]], 0, 0, 0, ["163\\d{2,6}", [5, 6, 7, 8, 9]], ["14(?:5(?:1[0458]|[23][458])|71\\d)\\d{4}", [9]], ["13(?:00\\d{3}|45[0-4])\\d{3}|13\\d{4}", [6, 8, 10]]], "0011"],
+                AW: ["297", "00", "(?:[25-79]\\d\\d|800)\\d{4}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[25-9]"]]]],
+                AX: ["358", "00|99(?:[01469]|5(?:[14]1|3[23]|5[59]|77|88|9[09]))", "2\\d{4,9}|35\\d{4,5}|(?:60\\d\\d|800)\\d{4,6}|7\\d{5,11}|(?:[14]\\d|3[0-46-9]|50)\\d{4,8}", [5, 6, 7, 8, 9, 10, 11, 12], 0, "0", 0, 0, 0, 0, "18", 0, "00"],
+                AZ: ["994", "00", "365\\d{6}|(?:[124579]\\d|60|88)\\d{7}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["90"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["1[28]|2|365|46", "1[28]|2|365|46", "1[28]|2|365(?:[0-46-9]|5[0-35-9])|46"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[13-9]"], "0$1"]], "0"],
+                BA: ["387", "00", "6\\d{8}|(?:[35689]\\d|49|70)\\d{6}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["6[1-3]|[7-9]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2-$3", ["[3-5]|6[56]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3 $4", ["6"], "0$1"]], "0"],
+                BB: ["1", "011", "(?:246|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-9]\\d{6})$", "246$1", 0, "246"],
+                BD: ["880", "00", "1\\d{9}|2\\d{7,8}|88\\d{4,6}|(?:8[0-79]|9\\d)\\d{4,8}|(?:[346]\\d|[57])\\d{5,8}", [6, 7, 8, 9, 10], [["(\\d{2})(\\d{4,6})", "$1-$2", ["31[5-8]|[459]1"], "0$1"], ["(\\d{3})(\\d{3,7})", "$1-$2", ["3(?:[67]|8[013-9])|4(?:6[168]|7|[89][18])|5(?:6[128]|9)|6(?:28|4[14]|5)|7[2-589]|8(?:0[014-9]|[12])|9[358]|(?:3[2-5]|4[235]|5[2-578]|6[0389]|76|8[3-7]|9[24])1|(?:44|66)[01346-9]"], "0$1"], ["(\\d{4})(\\d{3,6})", "$1-$2", ["[13-9]"], "0$1"], ["(\\d)(\\d{7,8})", "$1-$2", ["2"], "0$1"]], "0"],
+                BE: ["32", "00", "4\\d{8}|[1-9]\\d{7}", [8, 9], [["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["(?:80|9)0"], "0$1"], ["(\\d)(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[239]|4[23]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[15-8]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["4"], "0$1"]], "0"],
+                BF: ["226", "00", "[025-7]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[025-7]"]]]],
+                BG: ["359", "00", "[2-7]\\d{6,7}|[89]\\d{6,8}|2\\d{5}", [6, 7, 8, 9], [["(\\d)(\\d)(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["2"], "0$1"], ["(\\d{3})(\\d{4})", "$1 $2", ["43[1-6]|70[1-9]"], "0$1"], ["(\\d)(\\d{3})(\\d{3,4})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2,3})", "$1 $2 $3", ["[356]|4[124-7]|7[1-9]|8[1-6]|9[1-7]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["(?:70|8)0"], "0$1"], ["(\\d{3})(\\d{3})(\\d{2})", "$1 $2 $3", ["43[1-7]|7"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[48]|9[08]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["9"], "0$1"]], "0"],
+                BH: ["973", "00", "[136-9]\\d{7}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[13679]|8[047]"]]]],
+                BI: ["257", "00", "(?:[267]\\d|31)\\d{6}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2367]"]]]],
+                BJ: ["229", "00", "[25689]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[25689]"]]]],
+                BL: ["590", "00", "(?:590|(?:69|80)\\d|976)\\d{6}", [9], 0, "0", 0, 0, 0, 0, 0, [["590(?:2[7-9]|5[12]|87)\\d{4}"], ["69(?:0\\d\\d|1(?:2[29]|3[0-5]))\\d{4}"], ["80[0-5]\\d{6}"], 0, 0, 0, 0, 0, ["976[01]\\d{5}"]]],
+                BM: ["1", "011", "(?:441|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-8]\\d{6})$", "441$1", 0, "441"],
+                BN: ["673", "00", "[2-578]\\d{6}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-578]"]]]],
+                BO: ["591", "00(?:1\\d)?", "(?:[2-467]\\d\\d|8001)\\d{5}", [8, 9], [["(\\d)(\\d{7})", "$1 $2", ["[23]|4[46]"]], ["(\\d{8})", "$1", ["[67]"]], ["(\\d{3})(\\d{2})(\\d{4})", "$1 $2 $3", ["8"]]], "0", 0, "0(1\\d)?"],
+                BQ: ["599", "00", "(?:[34]1|7\\d)\\d{5}", [7], 0, 0, 0, 0, 0, 0, "[347]"],
+                BR: ["55", "00(?:1[245]|2[1-35]|31|4[13]|[56]5|99)", "(?:[1-46-9]\\d\\d|5(?:[0-46-9]\\d|5[0-24679]))\\d{8}|[1-9]\\d{9}|[3589]\\d{8}|[34]\\d{7}", [8, 9, 10, 11], [["(\\d{4})(\\d{4})", "$1-$2", ["300|4(?:0[02]|37)", "4(?:02|37)0|[34]00"]], ["(\\d{3})(\\d{2,3})(\\d{4})", "$1 $2 $3", ["(?:[358]|90)0"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2-$3", ["(?:[14689][1-9]|2[12478]|3[1-578]|5[13-5]|7[13-579])[2-57]"], "($1)"], ["(\\d{2})(\\d{5})(\\d{4})", "$1 $2-$3", ["[16][1-9]|[2-57-9]"], "($1)"]], "0", 0, "(?:0|90)(?:(1[245]|2[1-35]|31|4[13]|[56]5|99)(\\d{10,11}))?", "$2"],
+                BS: ["1", "011", "(?:242|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([3-8]\\d{6})$", "242$1", 0, "242"],
+                BT: ["975", "00", "[17]\\d{7}|[2-8]\\d{6}", [7, 8], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["[2-68]|7[246]"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["1[67]|7"]]]],
+                BW: ["267", "00", "(?:0800|(?:[37]|800)\\d)\\d{6}|(?:[2-6]\\d|90)\\d{5}", [7, 8, 10], [["(\\d{2})(\\d{5})", "$1 $2", ["90"]], ["(\\d{3})(\\d{4})", "$1 $2", ["[24-6]|3[15-79]"]], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[37]"]], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["0"]], ["(\\d{3})(\\d{4})(\\d{3})", "$1 $2 $3", ["8"]]]],
+                BY: ["375", "810", "(?:[12]\\d|33|44|902)\\d{7}|8(?:0[0-79]\\d{5,7}|[1-7]\\d{9})|8(?:1[0-489]|[5-79]\\d)\\d{7}|8[1-79]\\d{6,7}|8[0-79]\\d{5}|8\\d{5}", [6, 7, 8, 9, 10, 11], [["(\\d{3})(\\d{3})", "$1 $2", ["800"], "8 $1"], ["(\\d{3})(\\d{2})(\\d{2,4})", "$1 $2 $3", ["800"], "8 $1"], ["(\\d{4})(\\d{2})(\\d{3})", "$1 $2-$3", ["1(?:5[169]|6[3-5]|7[179])|2(?:1[35]|2[34]|3[3-5])", "1(?:5[169]|6(?:3[1-3]|4|5[125])|7(?:1[3-9]|7[0-24-6]|9[2-7]))|2(?:1[35]|2[34]|3[3-5])"], "8 0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2-$3-$4", ["1(?:[56]|7[467])|2[1-3]"], "8 0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2-$3-$4", ["[1-4]"], "8 0$1"], ["(\\d{3})(\\d{3,4})(\\d{4})", "$1 $2 $3", ["[89]"], "8 $1"]], "8", 0, "0|80?", 0, 0, 0, 0, "8~10"],
+                BZ: ["501", "00", "(?:0800\\d|[2-8])\\d{6}", [7, 11], [["(\\d{3})(\\d{4})", "$1-$2", ["[2-8]"]], ["(\\d)(\\d{3})(\\d{4})(\\d{3})", "$1-$2-$3-$4", ["0"]]]],
+                CA: ["1", "011", "(?:[2-8]\\d|90)\\d{8}", [10], 0, "1", 0, 0, 0, 0, 0, [["(?:2(?:04|[23]6|[48]9|50)|3(?:06|43|6[57])|4(?:03|1[68]|3[178]|50|74)|5(?:06|1[49]|48|79|8[17])|6(?:04|13|39|47|72)|7(?:0[59]|78|8[02])|8(?:[06]7|19|25|73)|90[25])[2-9]\\d{6}"], [""], ["8(?:00|33|44|55|66|77|88)[2-9]\\d{6}"], ["900[2-9]\\d{6}"], ["52(?:3(?:[2-46-9][02-9]\\d|5(?:[02-46-9]\\d|5[0-46-9]))|4(?:[2-478][02-9]\\d|5(?:[034]\\d|2[024-9]|5[0-46-9])|6(?:0[1-9]|[2-9]\\d)|9(?:[05-9]\\d|2[0-5]|49)))\\d{4}|52[34][2-9]1[02-9]\\d{4}|(?:5(?:00|2[12]|33|44|66|77|88)|622)[2-9]\\d{6}"], 0, 0, 0, ["600[2-9]\\d{6}"]]],
+                CC: ["61", "001[14-689]|14(?:1[14]|34|4[17]|[56]6|7[47]|88)0011", "1(?:[0-79]\\d|8[0-24-9])\\d{7}|[148]\\d{8}|1\\d{5,7}", [6, 7, 8, 9, 10], 0, "0", 0, "0|([59]\\d{7})$", "8$1", 0, 0, [["8(?:51(?:0(?:02|31|60|89)|1(?:18|76)|223)|91(?:0(?:1[0-2]|29)|1(?:[28]2|50|79)|2(?:10|64)|3(?:[06]8|22)|4[29]8|62\\d|70[23]|959))\\d{3}", [9]], ["4(?:83[0-38]|93[0-4])\\d{5}|4(?:[0-3]\\d|4[047-9]|5[0-25-9]|6[06-9]|7[02-9]|8[0-24-9]|9[0-27-9])\\d{6}", [9]], ["180(?:0\\d{3}|2)\\d{3}", [7, 10]], ["190[0-26]\\d{6}", [10]], 0, 0, 0, 0, ["14(?:5(?:1[0458]|[23][458])|71\\d)\\d{4}", [9]], ["13(?:00\\d{3}|45[0-4])\\d{3}|13\\d{4}", [6, 8, 10]]], "0011"],
+                CD: ["243", "00", "[189]\\d{8}|[1-68]\\d{6}", [7, 9], [["(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3", ["88"], "0$1"], ["(\\d{2})(\\d{5})", "$1 $2", ["[1-6]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[89]"], "0$1"]], "0"],
+                CF: ["236", "00", "(?:[27]\\d{3}|8776)\\d{4}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[278]"]]]],
+                CG: ["242", "00", "222\\d{6}|(?:0\\d|80)\\d{7}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["801"]], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["8"]], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[02]"]]]],
+                CH: ["41", "00", "8\\d{11}|[2-9]\\d{8}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["8[047]|90"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2-79]|81"], "0$1"], ["(\\d{3})(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4 $5", ["8"], "0$1"]], "0"],
+                CI: ["225", "00", "[02]\\d{9}|[02-9]\\d{7}", [8, 10], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[03-9]|2(?:[02-4]|1[023578])", "[03-9]|2(?:[02-4]|1(?:[02357]|80))"]], ["(\\d{2})(\\d{2})(\\d)(\\d{5})", "$1 $2 $3 $4", ["2"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{4})", "$1 $2 $3 $4", ["0"]]]],
+                CK: ["682", "00", "[2-578]\\d{4}", [5], [["(\\d{2})(\\d{3})", "$1 $2", ["[2-578]"]]]],
+                CL: ["56", "(?:0|1(?:1[0-69]|2[02-5]|5[13-58]|69|7[0167]|8[018]))0", "12300\\d{6}|6\\d{9,10}|[2-9]\\d{8}", [9, 10, 11], [["(\\d{5})(\\d{4})", "$1 $2", ["219", "2196"], "($1)"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["44"]], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["2[1-3]"], "($1)"], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["9[2-9]"]], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["3[2-5]|[47]|5[1-3578]|6[13-57]|8(?:0[1-9]|[1-9])"], "($1)"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["60|8"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"]], ["(\\d{3})(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3 $4", ["60"]]]],
+                CM: ["237", "00", "[26]\\d{8}|88\\d{6,7}", [8, 9], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["88"]], ["(\\d)(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4 $5", ["[26]|88"]]]],
+                CN: ["86", "00|1(?:[12]\\d|79)\\d\\d00", "1[127]\\d{8,9}|2\\d{9}(?:\\d{2})?|[12]\\d{6,7}|86\\d{6}|(?:1[03-689]\\d|6)\\d{7,9}|(?:[3-579]\\d|8[0-57-9])\\d{6,9}", [7, 8, 9, 10, 11, 12], [["(\\d{2})(\\d{5,6})", "$1 $2", ["(?:10|2[0-57-9])[19]", "(?:10|2[0-57-9])(?:10|9[56])", "(?:10|2[0-57-9])(?:100|9[56])"], "0$1"], ["(\\d{3})(\\d{5,6})", "$1 $2", ["3(?:[157]|35|49|9[1-68])|4(?:[17]|2[179]|6[47-9]|8[23])|5(?:[1357]|2[37]|4[36]|6[1-46]|80)|6(?:3[1-5]|6[0238]|9[12])|7(?:01|[1579]|2[248]|3[014-9]|4[3-6]|6[023689])|8(?:1[236-8]|2[5-7]|[37]|8[36-8]|9[1-8])|9(?:0[1-3689]|1[1-79]|[379]|4[13]|5[1-5])|(?:4[35]|59|85)[1-9]", "(?:3(?:[157]\\d|35|49|9[1-68])|4(?:[17]\\d|2[179]|[35][1-9]|6[47-9]|8[23])|5(?:[1357]\\d|2[37]|4[36]|6[1-46]|80|9[1-9])|6(?:3[1-5]|6[0238]|9[12])|7(?:01|[1579]\\d|2[248]|3[014-9]|4[3-6]|6[023689])|8(?:1[236-8]|2[5-7]|[37]\\d|5[1-9]|8[36-8]|9[1-8])|9(?:0[1-3689]|1[1-79]|[379]\\d|4[13]|5[1-5]))[19]", "85[23](?:10|95)|(?:3(?:[157]\\d|35|49|9[1-68])|4(?:[17]\\d|2[179]|[35][1-9]|6[47-9]|8[23])|5(?:[1357]\\d|2[37]|4[36]|6[1-46]|80|9[1-9])|6(?:3[1-5]|6[0238]|9[12])|7(?:01|[1579]\\d|2[248]|3[014-9]|4[3-6]|6[023689])|8(?:1[236-8]|2[5-7]|[37]\\d|5[14-9]|8[36-8]|9[1-8])|9(?:0[1-3689]|1[1-79]|[379]\\d|4[13]|5[1-5]))(?:10|9[56])", "85[23](?:100|95)|(?:3(?:[157]\\d|35|49|9[1-68])|4(?:[17]\\d|2[179]|[35][1-9]|6[47-9]|8[23])|5(?:[1357]\\d|2[37]|4[36]|6[1-46]|80|9[1-9])|6(?:3[1-5]|6[0238]|9[12])|7(?:01|[1579]\\d|2[248]|3[014-9]|4[3-6]|6[023689])|8(?:1[236-8]|2[5-7]|[37]\\d|5[14-9]|8[36-8]|9[1-8])|9(?:0[1-3689]|1[1-79]|[379]\\d|4[13]|5[1-5]))(?:100|9[56])"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["(?:4|80)0"]], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["10|2(?:[02-57-9]|1[1-9])", "10|2(?:[02-57-9]|1[1-9])", "10[0-79]|2(?:[02-57-9]|1[1-79])|(?:10|21)8(?:0[1-9]|[1-9])"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["3(?:[3-59]|7[02-68])|4(?:[26-8]|3[3-9]|5[2-9])|5(?:3[03-9]|[468]|7[028]|9[2-46-9])|6|7(?:[0-247]|3[04-9]|5[0-4689]|6[2368])|8(?:[1-358]|9[1-7])|9(?:[013479]|5[1-5])|(?:[34]1|55|79|87)[02-9]"], "0$1", 1], ["(\\d{3})(\\d{7,8})", "$1 $2", ["9"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["80"], "0$1", 1], ["(\\d{3})(\\d{4})(\\d{4})", "$1 $2 $3", ["[3-578]"], "0$1", 1], ["(\\d{3})(\\d{4})(\\d{4})", "$1 $2 $3", ["1[3-9]"]], ["(\\d{2})(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3 $4", ["[12]"], "0$1", 1]], "0", 0, "0|(1(?:[12]\\d|79)\\d\\d)", 0, 0, 0, 0, "00"],
+                CO: ["57", "00(?:4(?:[14]4|56)|[579])", "(?:1\\d|3)\\d{9}|[124-8]\\d{7}", [8, 10, 11], [["(\\d)(\\d{7})", "$1 $2", ["[14][2-9]|[25-8]"], "($1)"], ["(\\d{3})(\\d{7})", "$1 $2", ["3"]], ["(\\d)(\\d{3})(\\d{7})", "$1-$2-$3", ["1"], "0$1", 0, "$1 $2 $3"]], "0", 0, "0([3579]|4(?:[14]4|56))?"],
+                CR: ["506", "00", "(?:8\\d|90)\\d{8}|(?:[24-8]\\d{3}|3005)\\d{4}", [8, 10], [["(\\d{4})(\\d{4})", "$1 $2", ["[2-7]|8[3-9]"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1-$2-$3", ["[89]"]]], 0, 0, "(19(?:0[0-2468]|1[09]|20|66|77|99))"],
+                CU: ["53", "119", "[27]\\d{6,7}|[34]\\d{5,7}|(?:5|8\\d\\d)\\d{7}", [6, 7, 8, 10], [["(\\d{2})(\\d{4,6})", "$1 $2", ["2[1-4]|[34]"], "(0$1)"], ["(\\d)(\\d{6,7})", "$1 $2", ["7"], "(0$1)"], ["(\\d)(\\d{7})", "$1 $2", ["5"], "0$1"], ["(\\d{3})(\\d{7})", "$1 $2", ["8"], "0$1"]], "0"],
+                CV: ["238", "0", "(?:[2-59]\\d\\d|800)\\d{4}", [7], [["(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3", ["[2-589]"]]]],
+                CW: ["599", "00", "(?:[34]1|60|(?:7|9\\d)\\d)\\d{5}", [7, 8], [["(\\d{3})(\\d{4})", "$1 $2", ["[3467]"]], ["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["9[4-8]"]]], 0, 0, 0, 0, 0, "[69]"],
+                CX: ["61", "001[14-689]|14(?:1[14]|34|4[17]|[56]6|7[47]|88)0011", "1(?:[0-79]\\d|8[0-24-9])\\d{7}|[148]\\d{8}|1\\d{5,7}", [6, 7, 8, 9, 10], 0, "0", 0, "0|([59]\\d{7})$", "8$1", 0, 0, [["8(?:51(?:0(?:01|30|59|88)|1(?:17|46|75)|2(?:22|35))|91(?:00[6-9]|1(?:[28]1|49|78)|2(?:09|63)|3(?:12|26|75)|4(?:56|97)|64\\d|7(?:0[01]|1[0-2])|958))\\d{3}", [9]], ["4(?:83[0-38]|93[0-4])\\d{5}|4(?:[0-3]\\d|4[047-9]|5[0-25-9]|6[06-9]|7[02-9]|8[0-24-9]|9[0-27-9])\\d{6}", [9]], ["180(?:0\\d{3}|2)\\d{3}", [7, 10]], ["190[0-26]\\d{6}", [10]], 0, 0, 0, 0, ["14(?:5(?:1[0458]|[23][458])|71\\d)\\d{4}", [9]], ["13(?:00\\d{3}|45[0-4])\\d{3}|13\\d{4}", [6, 8, 10]]], "0011"],
+                CY: ["357", "00", "(?:[279]\\d|[58]0)\\d{6}", [8], [["(\\d{2})(\\d{6})", "$1 $2", ["[257-9]"]]]],
+                CZ: ["420", "00", "(?:[2-578]\\d|60)\\d{7}|9\\d{8,11}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[2-8]|9[015-7]"]], ["(\\d{2})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["9"]], ["(\\d{3})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["9"]]]],
+                DE: ["49", "00", "[2579]\\d{5,14}|49(?:[34]0|69|8\\d)\\d\\d?|49(?:37|49|60|7[089]|9\\d)\\d{1,3}|49(?:[12]\\d|3[2-689]|7[1-7])\\d{1,8}|(?:1|[368]\\d|4[0-8])\\d{3,13}|49(?:[05]\\d|31|[46][1-8])\\d{1,9}", [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], [["(\\d{2})(\\d{3,13})", "$1 $2", ["3[02]|40|[68]9"], "0$1"], ["(\\d{3})(\\d{3,12})", "$1 $2", ["2(?:0[1-389]|1[124]|2[18]|3[14])|3(?:[35-9][15]|4[015])|906|(?:2[4-9]|4[2-9]|[579][1-9]|[68][1-8])1", "2(?:0[1-389]|12[0-8])|3(?:[35-9][15]|4[015])|906|2(?:[13][14]|2[18])|(?:2[4-9]|4[2-9]|[579][1-9]|[68][1-8])1"], "0$1"], ["(\\d{4})(\\d{2,11})", "$1 $2", ["[24-6]|3(?:[3569][02-46-9]|4[2-4679]|7[2-467]|8[2-46-8])|70[2-8]|8(?:0[2-9]|[1-8])|90[7-9]|[79][1-9]", "[24-6]|3(?:3(?:0[1-467]|2[127-9]|3[124578]|7[1257-9]|8[1256]|9[145])|4(?:2[135]|4[13578]|9[1346])|5(?:0[14]|2[1-3589]|6[1-4]|7[13468]|8[13568])|6(?:2[1-489]|3[124-6]|6[13]|7[12579]|8[1-356]|9[135])|7(?:2[1-7]|4[145]|6[1-5]|7[1-4])|8(?:21|3[1468]|6|7[1467]|8[136])|9(?:0[12479]|2[1358]|4[134679]|6[1-9]|7[136]|8[147]|9[1468]))|70[2-8]|8(?:0[2-9]|[1-8])|90[7-9]|[79][1-9]|3[68]4[1347]|3(?:47|60)[1356]|3(?:3[46]|46|5[49])[1246]|3[4579]3[1357]"], "0$1"], ["(\\d{3})(\\d{4})", "$1 $2", ["138"], "0$1"], ["(\\d{5})(\\d{2,10})", "$1 $2", ["3"], "0$1"], ["(\\d{3})(\\d{5,11})", "$1 $2", ["181"], "0$1"], ["(\\d{3})(\\d)(\\d{4,10})", "$1 $2 $3", ["1(?:3|80)|9"], "0$1"], ["(\\d{3})(\\d{7,8})", "$1 $2", ["1[67]"], "0$1"], ["(\\d{3})(\\d{7,12})", "$1 $2", ["8"], "0$1"], ["(\\d{5})(\\d{6})", "$1 $2", ["185", "1850", "18500"], "0$1"], ["(\\d{3})(\\d{4})(\\d{4})", "$1 $2 $3", ["7"], "0$1"], ["(\\d{4})(\\d{7})", "$1 $2", ["18[68]"], "0$1"], ["(\\d{5})(\\d{6})", "$1 $2", ["15[0568]"], "0$1"], ["(\\d{4})(\\d{7})", "$1 $2", ["15[1279]"], "0$1"], ["(\\d{3})(\\d{8})", "$1 $2", ["18"], "0$1"], ["(\\d{3})(\\d{2})(\\d{7,8})", "$1 $2 $3", ["1(?:6[023]|7)"], "0$1"], ["(\\d{4})(\\d{2})(\\d{7})", "$1 $2 $3", ["15[279]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{8})", "$1 $2 $3", ["15"], "0$1"]], "0"],
+                DJ: ["253", "00", "(?:2\\d|77)\\d{6}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[27]"]]]],
+                DK: ["45", "00", "[2-9]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2-9]"]]]],
+                DM: ["1", "011", "(?:[58]\\d\\d|767|900)\\d{7}", [10], 0, "1", 0, "1|([2-7]\\d{6})$", "767$1", 0, "767"],
+                DO: ["1", "011", "(?:[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, 0, 0, 0, "8001|8[024]9"],
+                DZ: ["213", "00", "(?:[1-4]|[5-79]\\d|80)\\d{7}", [8, 9], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[1-4]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["9"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[5-8]"], "0$1"]], "0"],
+                EC: ["593", "00", "1\\d{9,10}|(?:[2-7]|9\\d)\\d{7}", [8, 9, 10, 11], [["(\\d)(\\d{3})(\\d{4})", "$1 $2-$3", ["[2-7]"], "(0$1)", 0, "$1-$2-$3"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["9"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["1"]]], "0"],
+                EE: ["372", "00", "8\\d{9}|[4578]\\d{7}|(?:[3-8]\\d|90)\\d{5}", [7, 8, 10], [["(\\d{3})(\\d{4})", "$1 $2", ["[369]|4[3-8]|5(?:[0-2]|5[0-478]|6[45])|7[1-9]|88", "[369]|4[3-8]|5(?:[02]|1(?:[0-8]|95)|5[0-478]|6(?:4[0-4]|5[1-589]))|7[1-9]|88"]], ["(\\d{4})(\\d{3,4})", "$1 $2", ["[45]|8(?:00|[1-49])", "[45]|8(?:00[1-9]|[1-49])"]], ["(\\d{2})(\\d{2})(\\d{4})", "$1 $2 $3", ["7"]], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["8"]]]],
+                EG: ["20", "00", "[189]\\d{8,9}|[24-6]\\d{8}|[135]\\d{7}", [8, 9, 10], [["(\\d)(\\d{7,8})", "$1 $2", ["[23]"], "0$1"], ["(\\d{2})(\\d{6,7})", "$1 $2", ["1[35]|[4-6]|8[2468]|9[235-7]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[189]"], "0$1"]], "0"],
+                EH: ["212", "00", "[5-8]\\d{8}", [9], 0, "0", 0, 0, 0, 0, "528[89]"],
+                ER: ["291", "00", "[178]\\d{6}", [7], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["[178]"], "0$1"]], "0"],
+                ES: ["34", "00", "[5-9]\\d{8}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[89]00"]], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[5-9]"]]]],
+                ET: ["251", "00", "(?:11|[2-59]\\d)\\d{7}", [9], [["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[1-59]"], "0$1"]], "0"],
+                FI: ["358", "00|99(?:[01469]|5(?:[14]1|3[23]|5[59]|77|88|9[09]))", "[1-35689]\\d{4}|7\\d{10,11}|(?:[124-7]\\d|3[0-46-9])\\d{8}|[1-9]\\d{5,8}", [5, 6, 7, 8, 9, 10, 11, 12], [["(\\d)(\\d{4,9})", "$1 $2", ["[2568][1-8]|3(?:0[1-9]|[1-9])|9"], "0$1"], ["(\\d{3})(\\d{3,7})", "$1 $2", ["[12]00|[368]|70[07-9]"], "0$1"], ["(\\d{2})(\\d{4,8})", "$1 $2", ["[1245]|7[135]"], "0$1"], ["(\\d{2})(\\d{6,10})", "$1 $2", ["7"], "0$1"]], "0", 0, 0, 0, 0, "1[03-79]|[2-9]", 0, "00"],
+                FJ: ["679", "0(?:0|52)", "45\\d{5}|(?:0800\\d|[235-9])\\d{6}", [7, 11], [["(\\d{3})(\\d{4})", "$1 $2", ["[235-9]|45"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["0"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                FK: ["500", "00", "[2-7]\\d{4}", [5]],
+                FM: ["691", "00", "(?:[39]\\d\\d|820)\\d{4}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[389]"]]]],
+                FO: ["298", "00", "[2-9]\\d{5}", [6], [["(\\d{6})", "$1", ["[2-9]"]]], 0, 0, "(10(?:01|[12]0|88))"],
+                FR: ["33", "00", "[1-9]\\d{8}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"], "0 $1"], ["(\\d)(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4 $5", ["[1-79]"], "0$1"]], "0"],
+                GA: ["241", "00", "(?:[067]\\d|11)\\d{6}|[2-7]\\d{6}", [7, 8], [["(\\d)(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2-7]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["11|[67]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["0"]]], 0, 0, "0(11\\d{6}|6[256]\\d{6}|7[47]\\d{6})", "$1"],
+                GB: ["44", "00", "[1-357-9]\\d{9}|[18]\\d{8}|8\\d{6}", [7, 9, 10], [["(\\d{3})(\\d{4})", "$1 $2", ["800", "8001", "80011", "800111", "8001111"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3", ["845", "8454", "84546", "845464"], "0$1"], ["(\\d{3})(\\d{6})", "$1 $2", ["800"], "0$1"], ["(\\d{5})(\\d{4,5})", "$1 $2", ["1(?:38|5[23]|69|76|94)", "1(?:(?:38|69)7|5(?:24|39)|768|946)", "1(?:3873|5(?:242|39[4-6])|(?:697|768)[347]|9467)"], "0$1"], ["(\\d{4})(\\d{5,6})", "$1 $2", ["1(?:[2-69][02-9]|[78])"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["[25]|7(?:0|6[02-9])", "[25]|7(?:0|6(?:[03-9]|2[356]))"], "0$1"], ["(\\d{4})(\\d{6})", "$1 $2", ["7"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[1389]"], "0$1"]], "0", 0, 0, 0, 0, 0, [["(?:1(?:1(?:3(?:[0-58]\\d\\d|73[03])|4(?:[0-5]\\d\\d|69[7-9]|70[059])|(?:5[0-26-9]|6[0-4]|[78][0-49])\\d\\d)|(?:2(?:(?:0[024-9]|2[3-9]|3[3-79]|4[1-689]|[58][02-9]|6[0-47-9]|7[013-9]|9\\d)\\d|1(?:[0-7]\\d|8[02]))|(?:3(?:0\\d|1[0-8]|[25][02-9]|3[02-579]|[468][0-46-9]|7[1-35-79]|9[2-578])|4(?:0[03-9]|[137]\\d|[28][02-57-9]|4[02-69]|5[0-8]|[69][0-79])|5(?:0[1-35-9]|[16]\\d|2[024-9]|3[015689]|4[02-9]|5[03-9]|7[0-35-9]|8[0-468]|9[0-57-9])|6(?:0[034689]|1\\d|2[0-35689]|[38][013-9]|4[1-467]|5[0-69]|6[13-9]|7[0-8]|9[0-24578])|7(?:0[0246-9]|2\\d|3[0236-8]|4[03-9]|5[0-46-9]|6[013-9]|7[0-35-9]|8[024-9]|9[02-9])|8(?:0[35-9]|2[1-57-9]|3[02-578]|4[0-578]|5[124-9]|6[2-69]|7\\d|8[02-9]|9[02569])|9(?:0[02-589]|[18]\\d|2[02-689]|3[1-57-9]|4[2-9]|5[0-579]|6[2-47-9]|7[0-24578]|9[2-57]))\\d)\\d)|2(?:0[013478]|3[0189]|4[017]|8[0-46-9]|9[0-2])\\d{3})\\d{4}|1(?:2(?:0(?:46[1-4]|87[2-9])|545[1-79]|76(?:2\\d|3[1-8]|6[1-6])|9(?:7(?:2[0-4]|3[2-5])|8(?:2[2-8]|7[0-47-9]|8[3-5])))|3(?:6(?:38[2-5]|47[23])|8(?:47[04-9]|64[0157-9]))|4(?:044[1-7]|20(?:2[23]|8\\d)|6(?:0(?:30|5[2-57]|6[1-8]|7[2-8])|140)|8(?:052|87[1-3]))|5(?:2(?:4(?:3[2-79]|6\\d)|76\\d)|6(?:26[06-9]|686))|6(?:06(?:4\\d|7[4-79])|295[5-7]|35[34]\\d|47(?:24|61)|59(?:5[08]|6[67]|74)|9(?:55[0-4]|77[23]))|7(?:26(?:6[13-9]|7[0-7])|(?:442|688)\\d|50(?:2[0-3]|[3-68]2|76))|8(?:27[56]\\d|37(?:5[2-5]|8[239])|843[2-58])|9(?:0(?:0(?:6[1-8]|85)|52\\d)|3583|4(?:66[1-8]|9(?:2[01]|81))|63(?:23|3[1-4])|9561))\\d{3}", [9, 10]], ["7(?:457[0-57-9]|700[01]|911[028])\\d{5}|7(?:[1-3]\\d\\d|4(?:[0-46-9]\\d|5[0-689])|5(?:0[0-8]|[13-9]\\d|2[0-35-9])|7(?:0[1-9]|[1-7]\\d|8[02-9]|9[0-689])|8(?:[014-9]\\d|[23][0-8])|9(?:[024-9]\\d|1[02-9]|3[0-689]))\\d{6}", [10]], ["80[08]\\d{7}|800\\d{6}|8001111"], ["(?:8(?:4[2-5]|7[0-3])|9(?:[01]\\d|8[2-49]))\\d{7}|845464\\d", [7, 10]], ["70\\d{8}", [10]], 0, ["(?:3[0347]|55)\\d{8}", [10]], ["76(?:464|652)\\d{5}|76(?:0[0-2]|2[356]|34|4[01347]|5[49]|6[0-369]|77|81|9[139])\\d{6}", [10]], ["56\\d{8}", [10]]], 0, " x"],
+                GD: ["1", "011", "(?:473|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-9]\\d{6})$", "473$1", 0, "473"],
+                GE: ["995", "00", "(?:[3-57]\\d\\d|800)\\d{6}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["70"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["32"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[57]"]], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[348]"], "0$1"]], "0"],
+                GF: ["594", "00", "(?:[56]94|80\\d|976)\\d{6}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[569]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"], "0$1"]], "0"],
+                GG: ["44", "00", "(?:1481|[357-9]\\d{3})\\d{6}|8\\d{6}(?:\\d{2})?", [7, 9, 10], 0, "0", 0, "0|([25-9]\\d{5})$", "1481$1", 0, 0, [["1481[25-9]\\d{5}", [10]], ["7(?:(?:781|839)\\d|911[17])\\d{5}", [10]], ["80[08]\\d{7}|800\\d{6}|8001111"], ["(?:8(?:4[2-5]|7[0-3])|9(?:[01]\\d|8[0-3]))\\d{7}|845464\\d", [7, 10]], ["70\\d{8}", [10]], 0, ["(?:3[0347]|55)\\d{8}", [10]], ["76(?:464|652)\\d{5}|76(?:0[0-2]|2[356]|34|4[01347]|5[49]|6[0-369]|77|81|9[139])\\d{6}", [10]], ["56\\d{8}", [10]]]],
+                GH: ["233", "00", "(?:[235]\\d{3}|800)\\d{5}", [8, 9], [["(\\d{3})(\\d{5})", "$1 $2", ["8"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[235]"], "0$1"]], "0"],
+                GI: ["350", "00", "(?:[25]\\d\\d|606)\\d{5}", [8], [["(\\d{3})(\\d{5})", "$1 $2", ["2"]]]],
+                GL: ["299", "00", "(?:19|[2-689]\\d)\\d{4}", [6], [["(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3", ["19|[2-689]"]]]],
+                GM: ["220", "00", "[2-9]\\d{6}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-9]"]]]],
+                GN: ["224", "00", "722\\d{6}|(?:3|6\\d)\\d{7}", [8, 9], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["3"]], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[67]"]]]],
+                GP: ["590", "00", "(?:590|(?:69|80)\\d|976)\\d{6}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[569]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"], "0$1"]], "0", 0, 0, 0, 0, 0, [["590(?:0[1-68]|1[0-2]|2[0-68]|3[1289]|4[0-24-9]|5[3-579]|6[0189]|7[08]|8[0-689]|9\\d)\\d{4}"], ["69(?:0\\d\\d|1(?:2[29]|3[0-5]))\\d{4}"], ["80[0-5]\\d{6}"], 0, 0, 0, 0, 0, ["976[01]\\d{5}"]]],
+                GQ: ["240", "00", "222\\d{6}|(?:3\\d|55|[89]0)\\d{7}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[235]"]], ["(\\d{3})(\\d{6})", "$1 $2", ["[89]"]]]],
+                GR: ["30", "00", "5005000\\d{3}|8\\d{9,10}|(?:[269]\\d|70)\\d{8}", [10, 11], [["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["21|7"]], ["(\\d{4})(\\d{6})", "$1 $2", ["2(?:2|3[2-57-9]|4[2-469]|5[2-59]|6[2-9]|7[2-69]|8[2-49])|5"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[2689]"]], ["(\\d{3})(\\d{3})(\\d{5})", "$1 $2 $3", ["8"]]]],
+                GT: ["502", "00", "(?:1\\d{3}|[2-7])\\d{7}", [8, 11], [["(\\d{4})(\\d{4})", "$1 $2", ["[2-7]"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"]]]],
+                GU: ["1", "011", "(?:[58]\\d\\d|671|900)\\d{7}", [10], 0, "1", 0, "1|([3-9]\\d{6})$", "671$1", 0, "671"],
+                GW: ["245", "00", "[49]\\d{8}|4\\d{6}", [7, 9], [["(\\d{3})(\\d{4})", "$1 $2", ["40"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[49]"]]]],
+                GY: ["592", "001", "(?:862\\d|9008)\\d{3}|(?:[2-46]\\d|77)\\d{5}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-46-9]"]]]],
+                HK: ["852", "00(?:30|5[09]|[126-9]?)", "8[0-46-9]\\d{6,7}|9\\d{4}(?:\\d(?:\\d(?:\\d{4})?)?)?|(?:[235-79]\\d|46)\\d{6}", [5, 6, 7, 8, 9, 11], [["(\\d{3})(\\d{2,5})", "$1 $2", ["900", "9003"]], ["(\\d{4})(\\d{4})", "$1 $2", ["[2-7]|8[1-4]|9(?:0[1-9]|[1-8])"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["8"]], ["(\\d{3})(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["9"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                HN: ["504", "00", "8\\d{10}|[237-9]\\d{7}", [8, 11], [["(\\d{4})(\\d{4})", "$1-$2", ["[237-9]"]]]],
+                HR: ["385", "00", "(?:[24-69]\\d|3[0-79])\\d{7}|80\\d{5,7}|[1-79]\\d{7}|6\\d{5,6}", [6, 7, 8, 9], [["(\\d{2})(\\d{2})(\\d{2,3})", "$1 $2 $3", ["6[01]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2,3})", "$1 $2 $3", ["8"], "0$1"], ["(\\d)(\\d{4})(\\d{3})", "$1 $2 $3", ["1"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[67]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["9"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[2-5]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["8"], "0$1"]], "0"],
+                HT: ["509", "00", "[2-489]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{4})", "$1 $2 $3", ["[2-489]"]]]],
+                HU: ["36", "00", "[235-7]\\d{8}|[1-9]\\d{7}", [8, 9], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["1"], "(06 $1)"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[27][2-9]|3[2-7]|4[24-9]|5[2-79]|6|8[2-57-9]|9[2-69]"], "(06 $1)"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[2-9]"], "06 $1"]], "06"],
+                ID: ["62", "00[89]", "(?:(?:00[1-9]|8\\d)\\d{4}|[1-36])\\d{6}|00\\d{10}|[1-9]\\d{8,10}|[2-9]\\d{7}", [7, 8, 9, 10, 11, 12, 13], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["15"]], ["(\\d{2})(\\d{5,9})", "$1 $2", ["2[124]|[36]1"], "(0$1)"], ["(\\d{3})(\\d{5,7})", "$1 $2", ["800"], "0$1"], ["(\\d{3})(\\d{5,8})", "$1 $2", ["[2-79]"], "(0$1)"], ["(\\d{3})(\\d{3,4})(\\d{3})", "$1-$2-$3", ["8[1-35-9]"], "0$1"], ["(\\d{3})(\\d{6,8})", "$1 $2", ["1"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["804"], "0$1"], ["(\\d{3})(\\d)(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["80"], "0$1"], ["(\\d{3})(\\d{4})(\\d{4,5})", "$1-$2-$3", ["8"], "0$1"]], "0"],
+                IE: ["353", "00", "(?:1\\d|[2569])\\d{6,8}|4\\d{6,9}|7\\d{8}|8\\d{8,9}", [7, 8, 9, 10], [["(\\d{2})(\\d{5})", "$1 $2", ["2[24-9]|47|58|6[237-9]|9[35-9]"], "(0$1)"], ["(\\d{3})(\\d{5})", "$1 $2", ["[45]0"], "(0$1)"], ["(\\d)(\\d{3,4})(\\d{4})", "$1 $2 $3", ["1"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[2569]|4[1-69]|7[14]"], "(0$1)"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["70"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["81"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[78]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1"]], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["4"], "(0$1)"], ["(\\d{2})(\\d)(\\d{3})(\\d{4})", "$1 $2 $3 $4", ["8"], "0$1"]], "0"],
+                IL: ["972", "0(?:0|1[2-9])", "1\\d{6}(?:\\d{3,5})?|[57]\\d{8}|[1-489]\\d{7}", [7, 8, 9, 10, 11, 12], [["(\\d{4})(\\d{3})", "$1-$2", ["125"]], ["(\\d{4})(\\d{2})(\\d{2})", "$1-$2-$3", ["121"]], ["(\\d)(\\d{3})(\\d{4})", "$1-$2-$3", ["[2-489]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1-$2-$3", ["[57]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3})", "$1-$2-$3", ["12"]], ["(\\d{4})(\\d{6})", "$1-$2", ["159"]], ["(\\d)(\\d{3})(\\d{3})(\\d{3})", "$1-$2-$3-$4", ["1[7-9]"]], ["(\\d{3})(\\d{1,2})(\\d{3})(\\d{4})", "$1-$2 $3-$4", ["15"]]], "0"],
+                IM: ["44", "00", "1624\\d{6}|(?:[3578]\\d|90)\\d{8}", [10], 0, "0", 0, "0|([25-8]\\d{5})$", "1624$1", 0, "74576|(?:16|7[56])24"],
+                IN: ["91", "00", "(?:000800|[2-9]\\d\\d)\\d{7}|1\\d{7,12}", [8, 9, 10, 11, 12, 13], [["(\\d{8})", "$1", ["5(?:0|2[23]|3[03]|[67]1|88)", "5(?:0|2(?:21|3)|3(?:0|3[23])|616|717|888)", "5(?:0|2(?:21|3)|3(?:0|3[23])|616|717|8888)"], 0, 1], ["(\\d{4})(\\d{4,5})", "$1 $2", ["180", "1800"], 0, 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["140"], 0, 1], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["11|2[02]|33|4[04]|79[1-7]|80[2-46]", "11|2[02]|33|4[04]|79(?:[1-6]|7[19])|80(?:[2-4]|6[0-589])", "11|2[02]|33|4[04]|79(?:[124-6]|3(?:[02-9]|1[0-24-9])|7(?:1|9[1-6]))|80(?:[2-4]|6[0-589])"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["1(?:2[0-249]|3[0-25]|4[145]|[68]|7[1257])|2(?:1[257]|3[013]|4[01]|5[0137]|6[0158]|78|8[1568])|3(?:26|4[1-3]|5[34]|6[01489]|7[02-46]|8[159])|4(?:1[36]|2[1-47]|5[12]|6[0-26-9]|7[0-24-9]|8[013-57]|9[014-7])|5(?:1[025]|22|[36][25]|4[28]|5[12]|[78]1)|6(?:12|[2-4]1|5[17]|6[13]|80)|7(?:12|3[134]|4[47]|61|88)|8(?:16|2[014]|3[126]|6[136]|7[078]|8[34]|91)|(?:43|59|75)[15]|(?:1[59]|29|67|72)[14]", "1(?:2[0-24]|3[0-25]|4[145]|[59][14]|6[1-9]|7[1257]|8[1-57-9])|2(?:1[257]|3[013]|4[01]|5[0137]|6[058]|78|8[1568]|9[14])|3(?:26|4[1-3]|5[34]|6[01489]|7[02-46]|8[159])|4(?:1[36]|2[1-47]|3[15]|5[12]|6[0-26-9]|7[0-24-9]|8[013-57]|9[014-7])|5(?:1[025]|22|[36][25]|4[28]|[578]1|9[15])|674|7(?:(?:2[14]|3[34]|5[15])[2-6]|61[346]|88[0-8])|8(?:70[2-6]|84[235-7]|91[3-7])|(?:1(?:29|60|8[06])|261|552|6(?:12|[2-47]1|5[17]|6[13]|80)|7(?:12|31|4[47])|8(?:16|2[014]|3[126]|6[136]|7[78]|83))[2-7]", "1(?:2[0-24]|3[0-25]|4[145]|[59][14]|6[1-9]|7[1257]|8[1-57-9])|2(?:1[257]|3[013]|4[01]|5[0137]|6[058]|78|8[1568]|9[14])|3(?:26|4[1-3]|5[34]|6[01489]|7[02-46]|8[159])|4(?:1[36]|2[1-47]|3[15]|5[12]|6[0-26-9]|7[0-24-9]|8[013-57]|9[014-7])|5(?:1[025]|22|[36][25]|4[28]|[578]1|9[15])|6(?:12(?:[2-6]|7[0-8])|74[2-7])|7(?:(?:2[14]|5[15])[2-6]|3171|61[346]|88(?:[2-7]|82))|8(?:70[2-6]|84(?:[2356]|7[19])|91(?:[3-6]|7[19]))|73[134][2-6]|(?:74[47]|8(?:16|2[014]|3[126]|6[136]|7[78]|83))(?:[2-6]|7[19])|(?:1(?:29|60|8[06])|261|552|6(?:[2-4]1|5[17]|6[13]|7(?:1|4[0189])|80)|7(?:12|88[01]))[2-7]"], "0$1", 1], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1(?:[2-479]|5[0235-9])|[2-5]|6(?:1[1358]|2[2457-9]|3[2-5]|4[235-7]|5[2-689]|6[24578]|7[235689]|8[1-6])|7(?:1[013-9]|28|3[129]|4[1-35689]|5[29]|6[02-5]|70)|807", "1(?:[2-479]|5[0235-9])|[2-5]|6(?:1[1358]|2(?:[2457]|84|95)|3(?:[2-4]|55)|4[235-7]|5[2-689]|6[24578]|7[235689]|8[1-6])|7(?:1(?:[013-8]|9[6-9])|28[6-8]|3(?:17|2[0-49]|9[2-57])|4(?:1[2-4]|[29][0-7]|3[0-8]|[56]|8[0-24-7])|5(?:2[1-3]|9[0-6])|6(?:0[5689]|2[5-9]|3[02-8]|4|5[0-367])|70[13-7])|807[19]", "1(?:[2-479]|5(?:[0236-9]|5[013-9]))|[2-5]|6(?:2(?:84|95)|355|83)|73179|807(?:1|9[1-3])|(?:1552|6(?:1[1358]|2[2457]|3[2-4]|4[235-7]|5[2-689]|6[24578]|7[235689]|8[124-6])\\d|7(?:1(?:[013-8]\\d|9[6-9])|28[6-8]|3(?:2[0-49]|9[2-57])|4(?:1[2-4]|[29][0-7]|3[0-8]|[56]\\d|8[0-24-7])|5(?:2[1-3]|9[0-6])|6(?:0[5689]|2[5-9]|3[02-8]|4\\d|5[0-367])|70[13-7]))[2-7]"], "0$1", 1], ["(\\d{5})(\\d{5})", "$1 $2", ["[6-9]"], "0$1", 1], ["(\\d{4})(\\d{2,4})(\\d{4})", "$1 $2 $3", ["1(?:6|8[06])", "1(?:6|8[06]0)"], 0, 1], ["(\\d{4})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["18"], 0, 1]], "0"],
+                IO: ["246", "00", "3\\d{6}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["3"]]]],
+                IQ: ["964", "00", "(?:1|7\\d\\d)\\d{7}|[2-6]\\d{7,8}", [8, 9, 10], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["1"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[2-6]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["7"], "0$1"]], "0"],
+                IR: ["98", "00", "[1-9]\\d{9}|(?:[1-8]\\d\\d|9)\\d{3,4}", [4, 5, 6, 7, 10], [["(\\d{4,5})", "$1", ["96"], "0$1"], ["(\\d{2})(\\d{4,5})", "$1 $2", ["(?:1[137]|2[13-68]|3[1458]|4[145]|5[1468]|6[16]|7[1467]|8[13467])[12689]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["9"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["[1-8]"], "0$1"]], "0"],
+                IS: ["354", "00|1(?:0(?:01|[12]0)|100)", "(?:38\\d|[4-9])\\d{6}", [7, 9], [["(\\d{3})(\\d{4})", "$1 $2", ["[4-9]"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["3"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                IT: ["39", "00", "0\\d{5,10}|3[0-8]\\d{7,10}|55\\d{8}|8\\d{5}(?:\\d{2,4})?|(?:1\\d|39)\\d{7,8}", [6, 7, 8, 9, 10, 11], [["(\\d{2})(\\d{4,6})", "$1 $2", ["0[26]"]], ["(\\d{3})(\\d{3,6})", "$1 $2", ["0[13-57-9][0159]|8(?:03|4[17]|9[245])", "0[13-57-9][0159]|8(?:03|4[17]|9(?:2|[45][0-4]))"]], ["(\\d{4})(\\d{2,6})", "$1 $2", ["0(?:[13-579][2-46-8]|8[236-8])"]], ["(\\d{4})(\\d{4})", "$1 $2", ["894"]], ["(\\d{2})(\\d{3,4})(\\d{4})", "$1 $2 $3", ["0[26]|5"]], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["1[4679]|[38]"]], ["(\\d{3})(\\d{3,4})(\\d{4})", "$1 $2 $3", ["0[13-57-9][0159]"]], ["(\\d{2})(\\d{4})(\\d{5})", "$1 $2 $3", ["0[26]"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["0"]], ["(\\d{3})(\\d{4})(\\d{4,5})", "$1 $2 $3", ["3"]]], 0, 0, 0, 0, 0, 0, [["0669[0-79]\\d{1,6}|0(?:1(?:[0159]\\d|[27][1-5]|31|4[1-4]|6[1356]|8[2-57])|2\\d\\d|3(?:[0159]\\d|2[1-4]|3[12]|[48][1-6]|6[2-59]|7[1-7])|4(?:[0159]\\d|[23][1-9]|4[245]|6[1-5]|7[1-4]|81)|5(?:[0159]\\d|2[1-5]|3[2-6]|4[1-79]|6[4-6]|7[1-578]|8[3-8])|6(?:[0-57-9]\\d|6[0-8])|7(?:[0159]\\d|2[12]|3[1-7]|4[2-46]|6[13569]|7[13-6]|8[1-59])|8(?:[0159]\\d|2[3-578]|3[1-356]|[6-8][1-5])|9(?:[0159]\\d|[238][1-5]|4[12]|6[1-8]|7[1-6]))\\d{2,7}"], ["3[1-9]\\d{8}|3[2-9]\\d{7}", [9, 10]], ["80(?:0\\d{3}|3)\\d{3}", [6, 9]], ["(?:0878\\d\\d|89(?:2|4[5-9]\\d))\\d{3}|89[45][0-4]\\d\\d|(?:1(?:44|6[346])|89(?:5[5-9]|9))\\d{6}", [6, 8, 9, 10]], ["1(?:78\\d|99)\\d{6}", [9, 10]], 0, 0, 0, ["55\\d{8}", [10]], ["84(?:[08]\\d{3}|[17])\\d{3}", [6, 9]]]],
+                JE: ["44", "00", "1534\\d{6}|(?:[3578]\\d|90)\\d{8}", [10], 0, "0", 0, "0|([0-24-8]\\d{5})$", "1534$1", 0, 0, [["1534[0-24-8]\\d{5}"], ["7(?:(?:(?:50|82)9|937)\\d|7(?:00[378]|97[7-9]))\\d{5}"], ["80(?:07(?:35|81)|8901)\\d{4}"], ["(?:8(?:4(?:4(?:4(?:05|42|69)|703)|5(?:041|800))|7(?:0002|1206))|90(?:066[59]|1810|71(?:07|55)))\\d{4}"], ["701511\\d{4}"], 0, ["(?:3(?:0(?:07(?:35|81)|8901)|3\\d{4}|4(?:4(?:4(?:05|42|69)|703)|5(?:041|800))|7(?:0002|1206))|55\\d{4})\\d{4}"], ["76(?:464|652)\\d{5}|76(?:0[0-2]|2[356]|34|4[01347]|5[49]|6[0-369]|77|81|9[139])\\d{6}"], ["56\\d{8}"]]],
+                JM: ["1", "011", "(?:[58]\\d\\d|658|900)\\d{7}", [10], 0, "1", 0, 0, 0, 0, "658|876"],
+                JO: ["962", "00", "(?:(?:[2689]|7\\d)\\d|32|53)\\d{6}", [8, 9], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["[2356]|87"], "(0$1)"], ["(\\d{3})(\\d{5,6})", "$1 $2", ["[89]"], "0$1"], ["(\\d{2})(\\d{7})", "$1 $2", ["70"], "0$1"], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["7"], "0$1"]], "0"],
+                JP: ["81", "010", "00[1-9]\\d{6,14}|[257-9]\\d{9}|(?:00|[1-9]\\d\\d)\\d{6}", [8, 9, 10, 11, 12, 13, 14, 15, 16, 17], [["(\\d{3})(\\d{3})(\\d{3})", "$1-$2-$3", ["(?:12|57|99)0"], "0$1"], ["(\\d{4})(\\d)(\\d{4})", "$1-$2-$3", ["1(?:26|3[79]|4[56]|5[4-68]|6[3-5])|499|5(?:76|97)|746|8(?:3[89]|47|51|63)|9(?:49|80|9[16])", "1(?:267|3(?:7[247]|9[278])|466|5(?:47|58|64)|6(?:3[245]|48|5[4-68]))|499[2468]|5(?:76|97)9|7468|8(?:3(?:8[7-9]|96)|477|51[2-9]|636)|9(?:496|802|9(?:1[23]|69))|1(?:45|58)[67]", "1(?:267|3(?:7[247]|9[278])|466|5(?:47|58|64)|6(?:3[245]|48|5[4-68]))|499[2468]|5(?:769|979[2-69])|7468|8(?:3(?:8[7-9]|96[2457-9])|477|51[2-9]|636[457-9])|9(?:496|802|9(?:1[23]|69))|1(?:45|58)[67]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1-$2-$3", ["60"], "0$1"], ["(\\d)(\\d{4})(\\d{4})", "$1-$2-$3", ["[36]|4(?:2[09]|7[01])", "[36]|4(?:2(?:0|9[02-69])|7(?:0[019]|1))"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1-$2-$3", ["1(?:1|5[45]|77|88|9[69])|2(?:2[1-37]|3[0-269]|4[59]|5|6[24]|7[1-358]|8[1369]|9[0-38])|4(?:[28][1-9]|3[0-57]|[45]|6[248]|7[2-579]|9[29])|5(?:2|3[045]|4[0-369]|5[29]|8[02389]|9[0-389])|7(?:2[02-46-9]|34|[58]|6[0249]|7[57]|9[2-6])|8(?:2[124589]|3[27-9]|49|51|6|7[0-468]|8[68]|9[019])|9(?:[23][1-9]|4[15]|5[138]|6[1-3]|7[156]|8[189]|9[1-489])", "1(?:1|5(?:4[018]|5[017])|77|88|9[69])|2(?:2(?:[127]|3[014-9])|3[0-269]|4[59]|5(?:[1-3]|5[0-69]|9[19])|62|7(?:[1-35]|8[0189])|8(?:[16]|3[0134]|9[0-5])|9(?:[028]|17))|4(?:2(?:[13-79]|8[014-6])|3[0-57]|[45]|6[248]|7[2-47]|8[1-9])|5(?:2|3[045]|4[0-369]|8[02389]|9[0-3])|7(?:2[02-46-9]|34|[58]|6[0249]|7[57]|9(?:[23]|4[0-59]|5[01569]|6[0167]))|8(?:2(?:[1258]|4[0-39]|9[0-2469])|49|51|6(?:[0-24]|36|5[0-3589]|72|9[01459])|7[0-468]|8[68])|9(?:[23][1-9]|4[15]|5[138]|6[1-3]|7[156]|8[189]|9(?:[1289]|3[34]|4[0178]))|(?:49|55|83)[29]|(?:264|837)[016-9]|2(?:57|93)[015-9]|(?:25[0468]|422|838)[01]|(?:47[59]|59[89]|8(?:6[68]|9))[019]", "1(?:1|5(?:4[018]|5[017])|77|88|9[69])|2(?:2[127]|3[0-269]|4[59]|5(?:[1-3]|5[0-69]|9(?:17|99))|6(?:2|4[016-9])|7(?:[1-35]|8[0189])|8(?:[16]|3[0134]|9[0-5])|9(?:[028]|17))|4(?:2(?:[13-79]|8[014-6])|3[0-57]|[45]|6[248]|7[2-47]|9[29])|5(?:2|3[045]|4[0-369]|5[29]|8[02389]|9[0-3])|7(?:2[02-46-9]|34|[58]|6[0249]|7[57]|9(?:[23]|4[0-59]|5[01569]|6[0167]))|8(?:2(?:[1258]|4[0-39]|9[0169])|3(?:[29]|7(?:[017-9]|6[6-8]))|49|51|6(?:[0-24]|36[23]|5(?:[0-389]|5[23])|6(?:[01]|9[178])|72|9[0145])|7[0-468]|8[68])|9(?:4[15]|5[138]|7[156]|8[189]|9(?:[1289]|3(?:31|4[357])|4[0178]))|(?:8294|96)[1-3]|2(?:57|93)[015-9]|(?:223|8699)[014-9]|(?:25[0468]|422|838)[01]|(?:48|8292|9[23])[1-9]|(?:47[59]|59[89]|8(?:68|9))[019]", "1(?:1|5(?:4[018]|5[017])|77|88|9[69])|2(?:2[127]|3[0-269]|4[59]|5(?:[1-3]|5[0-69]|7[015-9]|9(?:17|99))|6(?:2|4[016-9])|7(?:[1-35]|8[0189])|8(?:[16]|3[0134]|9[0-5])|9(?:[028]|17|3[015-9]))|4(?:2(?:[13-79]|8[014-6])|3[0-57]|[45]|6[248]|7[2-47]|9[29])|5(?:2|3[045]|4[0-369]|5[29]|8[02389]|9[0-3])|7(?:2[02-46-9]|34|[58]|6[0249]|7[57]|9(?:[23]|4[0-59]|5[01569]|6[0167]))|8(?:2(?:[1258]|4[0-39]|9(?:[019]|4[1-3]|6(?:[0-47-9]|5[01346-9])))|3(?:[29]|7(?:[017-9]|6[6-8]))|49|51|6(?:[0-24]|36[23]|5(?:[0-389]|5[23])|6(?:[01]|9[178])|72|9[0145])|7[0-468]|8[68])|9(?:4[15]|5[138]|6[1-3]|7[156]|8[189]|9(?:[1289]|3(?:31|4[357])|4[0178]))|(?:223|8699)[014-9]|(?:25[0468]|422|838)[01]|(?:48|829(?:2|66)|9[23])[1-9]|(?:47[59]|59[89]|8(?:68|9))[019]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{4})", "$1-$2-$3", ["[14]|[289][2-9]|5[3-9]|7[2-4679]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1-$2-$3", ["800"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1-$2-$3", ["[257-9]"], "0$1"]], "0"],
+                KE: ["254", "000", "(?:[17]\\d\\d|900)\\d{6}|(?:2|80)0\\d{6,7}|[4-6]\\d{6,8}", [7, 8, 9, 10], [["(\\d{2})(\\d{5,7})", "$1 $2", ["[24-6]"], "0$1"], ["(\\d{3})(\\d{6})", "$1 $2", ["[17]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[89]"], "0$1"]], "0"],
+                KG: ["996", "00", "8\\d{9}|(?:[235-8]\\d|99)\\d{7}", [9, 10], [["(\\d{4})(\\d{5})", "$1 $2", ["3(?:1[346]|[24-79])"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[235-79]|88"], "0$1"], ["(\\d{3})(\\d{3})(\\d)(\\d{2,3})", "$1 $2 $3 $4", ["8"], "0$1"]], "0"],
+                KH: ["855", "00[14-9]", "1\\d{9}|[1-9]\\d{7,8}", [8, 9, 10], [["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[1-9]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1"]]], "0"],
+                KI: ["686", "00", "(?:[37]\\d|6[0-79])\\d{6}|(?:[2-48]\\d|50)\\d{3}", [5, 8], 0, "0"],
+                KM: ["269", "00", "[3478]\\d{6}", [7], [["(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3", ["[3478]"]]]],
+                KN: ["1", "011", "(?:[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-7]\\d{6})$", "869$1", 0, "869"],
+                KP: ["850", "00|99", "85\\d{6}|(?:19\\d|[2-7])\\d{7}", [8, 10], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["8"], "0$1"], ["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["[2-7]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"], "0$1"]], "0"],
+                KR: ["82", "00(?:[125689]|3(?:[46]5|91)|7(?:00|27|3|55|6[126]))", "00[1-9]\\d{8,11}|(?:[12]|5\\d{3})\\d{7}|[13-6]\\d{9}|(?:[1-6]\\d|80)\\d{7}|[3-6]\\d{4,5}|(?:00|7)0\\d{8}", [5, 6, 8, 9, 10, 11, 12, 13, 14], [["(\\d{2})(\\d{3,4})", "$1-$2", ["(?:3[1-3]|[46][1-4]|5[1-5])1"], "0$1"], ["(\\d{4})(\\d{4})", "$1-$2", ["1"]], ["(\\d)(\\d{3,4})(\\d{4})", "$1-$2-$3", ["2"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1-$2-$3", ["60|8"], "0$1"], ["(\\d{2})(\\d{3,4})(\\d{4})", "$1-$2-$3", ["[1346]|5[1-5]"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1-$2-$3", ["[57]"], "0$1"], ["(\\d{2})(\\d{5})(\\d{4})", "$1-$2-$3", ["5"], "0$1"]], "0", 0, "0(8(?:[1-46-8]|5\\d\\d))?"],
+                KW: ["965", "00", "(?:18|[2569]\\d\\d)\\d{5}", [7, 8], [["(\\d{4})(\\d{3,4})", "$1 $2", ["[169]|2(?:[235]|4[1-35-9])|52"]], ["(\\d{3})(\\d{5})", "$1 $2", ["[25]"]]]],
+                KY: ["1", "011", "(?:345|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-9]\\d{6})$", "345$1", 0, "345"],
+                KZ: ["7", "810", "33622\\d{5}|(?:7\\d|80)\\d{8}", [10], 0, "8", 0, 0, 0, 0, "33|7", 0, "8~10"],
+                LA: ["856", "00", "[23]\\d{9}|3\\d{8}|(?:[235-8]\\d|41)\\d{6}", [8, 9, 10], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["2[13]|3[14]|[4-8]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3 $4", ["30[013-9]"], "0$1"], ["(\\d{2})(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["[23]"], "0$1"]], "0"],
+                LB: ["961", "00", "[27-9]\\d{7}|[13-9]\\d{6}", [7, 8], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["[13-69]|7(?:[2-57]|62|8[0-7]|9[04-9])|8[02-9]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[27-9]"]]], "0"],
+                LC: ["1", "011", "(?:[58]\\d\\d|758|900)\\d{7}", [10], 0, "1", 0, "1|([2-8]\\d{6})$", "758$1", 0, "758"],
+                LI: ["423", "00", "90\\d{5}|(?:[2378]|6\\d\\d)\\d{6}", [7, 9], [["(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3", ["[237-9]"]], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["69"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["6"]]], "0", 0, "0|(1001)"],
+                LK: ["94", "00", "[1-9]\\d{8}", [9], [["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["7"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[1-689]"], "0$1"]], "0"],
+                LR: ["231", "00", "(?:2|33|5\\d|77|88)\\d{7}|[4-6]\\d{6}", [7, 8, 9], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["[4-6]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[3578]"], "0$1"]], "0"],
+                LS: ["266", "00", "(?:[256]\\d\\d|800)\\d{5}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[2568]"]]]],
+                LT: ["370", "00", "(?:[3469]\\d|52|[78]0)\\d{6}", [8], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["52[0-7]"], "(8-$1)", 1], ["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["[7-9]"], "8 $1", 1], ["(\\d{2})(\\d{6})", "$1 $2", ["37|4(?:[15]|6[1-8])"], "(8-$1)", 1], ["(\\d{3})(\\d{5})", "$1 $2", ["[3-6]"], "(8-$1)", 1]], "8", 0, "[08]"],
+                LU: ["352", "00", "35[013-9]\\d{4,8}|6\\d{8}|35\\d{2,4}|(?:[2457-9]\\d|3[0-46-9])\\d{2,9}", [4, 5, 6, 7, 8, 9, 10, 11], [["(\\d{2})(\\d{3})", "$1 $2", ["2(?:0[2-689]|[2-9])|[3-57]|8(?:0[2-9]|[13-9])|9(?:0[89]|[2-579])"]], ["(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3", ["2(?:0[2-689]|[2-9])|[3-57]|8(?:0[2-9]|[13-9])|9(?:0[89]|[2-579])"]], ["(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3", ["20[2-689]"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{1,2})", "$1 $2 $3 $4", ["2(?:[0367]|4[3-8])"]], ["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["80[01]|90[015]"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3 $4", ["20"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["6"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})(\\d{1,2})", "$1 $2 $3 $4 $5", ["2(?:[0367]|4[3-8])"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{1,5})", "$1 $2 $3 $4", ["[3-57]|8[13-9]|9(?:0[89]|[2-579])|(?:2|80)[2-9]"]]], 0, 0, "(15(?:0[06]|1[12]|[35]5|4[04]|6[26]|77|88|99)\\d)"],
+                LV: ["371", "00", "(?:[268]\\d|90)\\d{6}", [8], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[269]|8[01]"]]]],
+                LY: ["218", "00", "[2-9]\\d{8}", [9], [["(\\d{2})(\\d{7})", "$1-$2", ["[2-9]"], "0$1"]], "0"],
+                MA: ["212", "00", "[5-8]\\d{8}", [9], [["(\\d{5})(\\d{4})", "$1-$2", ["5(?:29|38)", "5(?:29|38)[89]", "5(?:29|38)[89]0"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["5[45]"], "0$1"], ["(\\d{4})(\\d{5})", "$1-$2", ["5(?:2[2-489]|3[5-9]|9)|892", "5(?:2(?:[2-49]|8[235-9])|3[5-9]|9)|892"], "0$1"], ["(\\d{2})(\\d{7})", "$1-$2", ["8"], "0$1"], ["(\\d{3})(\\d{6})", "$1-$2", ["[5-7]"], "0$1"]], "0", 0, 0, 0, 0, 0, [["5(?:29(?:[189][05]|2[29]|3[01])|38[89][05])\\d{4}|5(?:2(?:[015-7]\\d|2[02-9]|3[0-578]|4[02-46-8]|8[0235-7]|90)|3(?:[0-47]\\d|5[02-9]|6[02-8]|80|9[3-9])|(?:4[067]|5[03])\\d)\\d{5}"], ["(?:6(?:[0-79]\\d|8[0-247-9])|7(?:0\\d|10|6[1267]|7[0-57]))\\d{6}"], ["80\\d{7}"], ["89\\d{7}"], 0, 0, 0, 0, ["592(?:4[0-2]|93)\\d{4}"]]],
+                MC: ["377", "00", "(?:[3489]|6\\d)\\d{7}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["4"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[389]"]], ["(\\d)(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4 $5", ["6"], "0$1"]], "0"],
+                MD: ["373", "00", "(?:[235-7]\\d|[89]0)\\d{6}", [8], [["(\\d{3})(\\d{5})", "$1 $2", ["[89]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["22|3"], "0$1"], ["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["[25-7]"], "0$1"]], "0"],
+                ME: ["382", "00", "(?:20|[3-79]\\d)\\d{6}|80\\d{6,7}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[2-9]"], "0$1"]], "0"],
+                MF: ["590", "00", "(?:590|(?:69|80)\\d|976)\\d{6}", [9], 0, "0", 0, 0, 0, 0, 0, [["590(?:0[079]|[14]3|[27][79]|30|5[0-268]|87)\\d{4}"], ["69(?:0\\d\\d|1(?:2[29]|3[0-5]))\\d{4}"], ["80[0-5]\\d{6}"], 0, 0, 0, 0, 0, ["976[01]\\d{5}"]]],
+                MG: ["261", "00", "[23]\\d{8}", [9], [["(\\d{2})(\\d{2})(\\d{3})(\\d{2})", "$1 $2 $3 $4", ["[23]"], "0$1"]], "0", 0, "0|([24-9]\\d{6})$", "20$1"],
+                MH: ["692", "011", "329\\d{4}|(?:[256]\\d|45)\\d{5}", [7], [["(\\d{3})(\\d{4})", "$1-$2", ["[2-6]"]]], "1"],
+                MK: ["389", "00", "[2-578]\\d{7}", [8], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[347]"], "0$1"], ["(\\d{3})(\\d)(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[58]"], "0$1"]], "0"],
+                ML: ["223", "00", "[24-9]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[24-9]"]]]],
+                MM: ["95", "00", "1\\d{5,7}|95\\d{6}|(?:[4-7]|9[0-46-9])\\d{6,8}|(?:2|8\\d)\\d{5,8}", [6, 7, 8, 9, 10], [["(\\d)(\\d{2})(\\d{3})", "$1 $2 $3", ["16|2"], "0$1"], ["(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3", ["[45]|6(?:0[23]|[1-689]|7[235-7])|7(?:[0-4]|5[2-7])|8[1-6]"], "0$1"], ["(\\d)(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[12]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[4-7]|8[1-35]"], "0$1"], ["(\\d)(\\d{3})(\\d{4,6})", "$1 $2 $3", ["9(?:2[0-4]|[35-9]|4[137-9])"], "0$1"], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"], "0$1"], ["(\\d)(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["92"], "0$1"], ["(\\d)(\\d{5})(\\d{4})", "$1 $2 $3", ["9"], "0$1"]], "0"],
+                MN: ["976", "001", "[12]\\d{7,9}|[57-9]\\d{7}", [8, 9, 10], [["(\\d{2})(\\d{2})(\\d{4})", "$1 $2 $3", ["[12]1"], "0$1"], ["(\\d{4})(\\d{4})", "$1 $2", ["[57-9]"]], ["(\\d{3})(\\d{5,6})", "$1 $2", ["[12]2[1-3]"], "0$1"], ["(\\d{4})(\\d{5,6})", "$1 $2", ["[12](?:27|3[2-8]|4[2-68]|5[1-4689])", "[12](?:27|3[2-8]|4[2-68]|5[1-4689])[0-3]"], "0$1"], ["(\\d{5})(\\d{4,5})", "$1 $2", ["[12]"], "0$1"]], "0"],
+                MO: ["853", "00", "(?:28|[68]\\d)\\d{6}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[268]"]]]],
+                MP: ["1", "011", "[58]\\d{9}|(?:67|90)0\\d{7}", [10], 0, "1", 0, "1|([2-9]\\d{6})$", "670$1", 0, "670"],
+                MQ: ["596", "00", "(?:69|80)\\d{7}|(?:59|97)6\\d{6}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[569]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"], "0$1"]], "0"],
+                MR: ["222", "00", "(?:[2-4]\\d\\d|800)\\d{5}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2-48]"]]]],
+                MS: ["1", "011", "(?:[58]\\d\\d|664|900)\\d{7}", [10], 0, "1", 0, "1|([34]\\d{6})$", "664$1", 0, "664"],
+                MT: ["356", "00", "3550\\d{4}|(?:[2579]\\d\\d|800)\\d{5}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[2357-9]"]]]],
+                MU: ["230", "0(?:0|[24-7]0|3[03])", "(?:[2-468]|5\\d)\\d{6}", [7, 8], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-46]|8[013]"]], ["(\\d{4})(\\d{4})", "$1 $2", ["5"]]], 0, 0, 0, 0, 0, 0, 0, "020"],
+                MV: ["960", "0(?:0|19)", "(?:800|9[0-57-9]\\d)\\d{7}|[34679]\\d{6}", [7, 10], [["(\\d{3})(\\d{4})", "$1-$2", ["[3467]|9[13-9]"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[89]"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                MW: ["265", "00", "1\\d{6}(?:\\d{2})?|(?:[23]1|77|88|99)\\d{7}", [7, 9], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["1[2-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[137-9]"], "0$1"]], "0"],
+                MX: ["52", "0[09]", "(?:1(?:[01467]\\d|[2359][1-9]|8[1-79])|[2-9]\\d)\\d{8}", [10, 11], [["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["33|5[56]|81"], 0, 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[2-9]"], 0, 1], ["(\\d)(\\d{2})(\\d{4})(\\d{4})", "$2 $3 $4", ["1(?:33|5[56]|81)"], 0, 1], ["(\\d)(\\d{3})(\\d{3})(\\d{4})", "$2 $3 $4", ["1"], 0, 1]], "01", 0, "0(?:[12]|4[45])|1", 0, 0, 0, 0, "00"],
+                MY: ["60", "00", "1\\d{8,9}|(?:3\\d|[4-9])\\d{7}", [8, 9, 10], [["(\\d)(\\d{3})(\\d{4})", "$1-$2 $3", ["[4-79]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1-$2 $3", ["1(?:[02469]|[378][1-9])|8"], "0$1"], ["(\\d)(\\d{4})(\\d{4})", "$1-$2 $3", ["3"], "0$1"], ["(\\d)(\\d{3})(\\d{2})(\\d{4})", "$1-$2-$3-$4", ["1[36-8]"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1-$2 $3", ["15"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4})", "$1-$2 $3", ["1"], "0$1"]], "0"],
+                MZ: ["258", "00", "(?:2|8\\d)\\d{7}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["2|8[2-79]"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["8"]]]],
+                NA: ["264", "00", "[68]\\d{7,8}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["88"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["6"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["87"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"], "0$1"]], "0"],
+                NC: ["687", "00", "[2-57-9]\\d{5}", [6], [["(\\d{2})(\\d{2})(\\d{2})", "$1.$2.$3", ["[2-57-9]"]]]],
+                NE: ["227", "00", "[027-9]\\d{7}", [8], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["08"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[089]|2[013]|7[04]"]]]],
+                NF: ["672", "00", "[13]\\d{5}", [6], [["(\\d{2})(\\d{4})", "$1 $2", ["1[0-3]"]], ["(\\d)(\\d{5})", "$1 $2", ["[13]"]]], 0, 0, "([0-258]\\d{4})$", "3$1"],
+                NG: ["234", "009", "(?:[124-7]|9\\d{3})\\d{6}|[1-9]\\d{7}|[78]\\d{9,13}", [7, 8, 10, 11, 12, 13, 14], [["(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3", ["78"], "0$1"], ["(\\d)(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[12]|9(?:0[3-9]|[1-9])"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2,3})", "$1 $2 $3", ["[3-7]|8[2-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[7-9]"], "0$1"], ["(\\d{3})(\\d{4})(\\d{4,5})", "$1 $2 $3", ["[78]"], "0$1"], ["(\\d{3})(\\d{5})(\\d{5,6})", "$1 $2 $3", ["[78]"], "0$1"]], "0"],
+                NI: ["505", "00", "(?:1800|[25-8]\\d{3})\\d{4}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[125-8]"]]]],
+                NL: ["31", "00", "(?:[124-7]\\d\\d|3(?:[02-9]\\d|1[0-8]))\\d{6}|[89]\\d{6,9}|1\\d{4,5}", [5, 6, 7, 8, 9, 10], [["(\\d{3})(\\d{4,7})", "$1 $2", ["[89]0"], "0$1"], ["(\\d{2})(\\d{7})", "$1 $2", ["66"], "0$1"], ["(\\d)(\\d{8})", "$1 $2", ["6"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["1[16-8]|2[259]|3[124]|4[17-9]|5[124679]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[1-57-9]"], "0$1"]], "0"],
+                NO: ["47", "00", "(?:0|[2-9]\\d{3})\\d{4}", [5, 8], [["(\\d{3})(\\d{2})(\\d{3})", "$1 $2 $3", ["[489]|59"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[235-7]"]]], 0, 0, 0, 0, 0, "[02-689]|7[0-8]"],
+                NP: ["977", "00", "(?:1\\d|9)\\d{9}|[1-9]\\d{7}", [8, 10, 11], [["(\\d)(\\d{7})", "$1-$2", ["1[2-6]"], "0$1"], ["(\\d{2})(\\d{6})", "$1-$2", ["1[01]|[2-8]|9(?:[1-579]|6[2-6])"], "0$1"], ["(\\d{3})(\\d{7})", "$1-$2", ["9"]]], "0"],
+                NR: ["674", "00", "(?:444|(?:55|8\\d)\\d|666)\\d{4}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[4-68]"]]]],
+                NU: ["683", "00", "(?:[47]|888\\d)\\d{3}", [4, 7], [["(\\d{3})(\\d{4})", "$1 $2", ["8"]]]],
+                NZ: ["64", "0(?:0|161)", "[29]\\d{7,9}|50\\d{5}(?:\\d{2,3})?|6[0-35-9]\\d{6}|7\\d{7,8}|8\\d{4,9}|(?:11\\d|[34])\\d{7}", [5, 6, 7, 8, 9, 10], [["(\\d{2})(\\d{3,8})", "$1 $2", ["8[1-579]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2,3})", "$1 $2 $3", ["50[036-8]|[89]0", "50(?:[0367]|88)|[89]0"], "0$1"], ["(\\d)(\\d{3})(\\d{4})", "$1-$2 $3", ["24|[346]|7[2-57-9]|9[2-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["2(?:10|74)|[59]|80"], "0$1"], ["(\\d{2})(\\d{3,4})(\\d{4})", "$1 $2 $3", ["1|2[028]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,5})", "$1 $2 $3", ["2(?:[169]|7[0-35-9])|7|86"], "0$1"]], "0", 0, 0, 0, 0, 0, 0, "00"],
+                OM: ["968", "00", "(?:1505|[279]\\d{3}|500)\\d{4}|800\\d{5,6}", [7, 8, 9], [["(\\d{3})(\\d{4,6})", "$1 $2", ["[58]"]], ["(\\d{2})(\\d{6})", "$1 $2", ["2"]], ["(\\d{4})(\\d{4})", "$1 $2", ["[179]"]]]],
+                PA: ["507", "00", "8\\d{9}|[68]\\d{7}|[1-57-9]\\d{6}", [7, 8, 10], [["(\\d{3})(\\d{4})", "$1-$2", ["[1-57-9]"]], ["(\\d{4})(\\d{4})", "$1-$2", ["[68]"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"]]]],
+                PE: ["51", "19(?:1[124]|77|90)00", "(?:[14-8]|9\\d)\\d{7}", [8, 9], [["(\\d{3})(\\d{5})", "$1 $2", ["80"], "(0$1)"], ["(\\d)(\\d{7})", "$1 $2", ["1"], "(0$1)"], ["(\\d{2})(\\d{6})", "$1 $2", ["[4-8]"], "(0$1)"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["9"]]], "0", 0, 0, 0, 0, 0, 0, 0, " Anexo "],
+                PF: ["689", "00", "4\\d{5}(?:\\d{2})?|8\\d{7,8}", [6, 8, 9], [["(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3", ["44"]], ["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["4|8[7-9]"]], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"]]]],
+                PG: ["675", "00|140[1-3]", "(?:180|[78]\\d{3})\\d{4}|(?:[2-589]\\d|64)\\d{5}", [7, 8], [["(\\d{3})(\\d{4})", "$1 $2", ["18|[2-69]|85"]], ["(\\d{4})(\\d{4})", "$1 $2", ["[78]"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                PH: ["63", "00", "1800\\d{7,9}|(?:2|[89]\\d{4})\\d{5}|[2-8]\\d{8}|[28]\\d{7}", [6, 8, 9, 10, 11, 12, 13], [["(\\d)(\\d{5})", "$1 $2", ["2"], "(0$1)"], ["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["2"], "(0$1)"], ["(\\d{4})(\\d{4,6})", "$1 $2", ["3(?:23|39|46)|4(?:2[3-6]|[35]9|4[26]|76)|544|88[245]|(?:52|64|86)2", "3(?:230|397|461)|4(?:2(?:35|[46]4|51)|396|4(?:22|63)|59[347]|76[15])|5(?:221|446)|642[23]|8(?:622|8(?:[24]2|5[13]))"], "(0$1)"], ["(\\d{5})(\\d{4})", "$1 $2", ["346|4(?:27|9[35])|883", "3469|4(?:279|9(?:30|56))|8834"], "(0$1)"], ["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["2"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[3-7]|8[2-8]"], "(0$1)"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["[89]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"]], ["(\\d{4})(\\d{1,2})(\\d{3})(\\d{4})", "$1 $2 $3 $4", ["1"]]], "0"],
+                PK: ["92", "00", "122\\d{6}|[24-8]\\d{10,11}|9(?:[013-9]\\d{8,10}|2(?:[01]\\d\\d|2(?:[06-8]\\d|1[01]))\\d{7})|(?:[2-8]\\d{3}|92(?:[0-7]\\d|8[1-9]))\\d{6}|[24-9]\\d{8}|[89]\\d{7}", [8, 9, 10, 11, 12], [["(\\d{3})(\\d{3})(\\d{2,7})", "$1 $2 $3", ["[89]0"], "0$1"], ["(\\d{4})(\\d{5})", "$1 $2", ["1"]], ["(\\d{3})(\\d{6,7})", "$1 $2", ["2(?:3[2358]|4[2-4]|9[2-8])|45[3479]|54[2-467]|60[468]|72[236]|8(?:2[2-689]|3[23578]|4[3478]|5[2356])|9(?:2[2-8]|3[27-9]|4[2-6]|6[3569]|9[25-8])", "9(?:2[3-8]|98)|(?:2(?:3[2358]|4[2-4]|9[2-8])|45[3479]|54[2-467]|60[468]|72[236]|8(?:2[2-689]|3[23578]|4[3478]|5[2356])|9(?:22|3[27-9]|4[2-6]|6[3569]|9[25-7]))[2-9]"], "(0$1)"], ["(\\d{2})(\\d{7,8})", "$1 $2", ["(?:2[125]|4[0-246-9]|5[1-35-7]|6[1-8]|7[14]|8[16]|91)[2-9]"], "(0$1)"], ["(\\d{5})(\\d{5})", "$1 $2", ["58"], "(0$1)"], ["(\\d{3})(\\d{7})", "$1 $2", ["3"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["2[125]|4[0-246-9]|5[1-35-7]|6[1-8]|7[14]|8[16]|91"], "(0$1)"], ["(\\d{3})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["[24-9]"], "(0$1)"]], "0"],
+                PL: ["48", "00", "6\\d{5}(?:\\d{2})?|8\\d{9}|[1-9]\\d{6}(?:\\d{2})?", [6, 7, 8, 9, 10], [["(\\d{5})", "$1", ["19"]], ["(\\d{3})(\\d{3})", "$1 $2", ["11|64"]], ["(\\d{2})(\\d{2})(\\d{3})", "$1 $2 $3", ["(?:1[2-8]|2[2-69]|3[2-4]|4[1-468]|5[24-689]|6[1-3578]|7[14-7]|8[1-79]|9[145])1", "(?:1[2-8]|2[2-69]|3[2-4]|4[1-468]|5[24-689]|6[1-3578]|7[14-7]|8[1-79]|9[145])19"]], ["(\\d{3})(\\d{2})(\\d{2,3})", "$1 $2 $3", ["64"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["39|45|5[0137]|6[0469]|7[02389]|8(?:0[14]|8)"]], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["1[2-8]|[2-7]|8[1-79]|9[145]"]], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["8"]]]],
+                PM: ["508", "00", "(?:[45]|80\\d\\d)\\d{5}", [6, 9], [["(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3", ["[45]"], "0$1"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"], "0$1"]], "0"],
+                PR: ["1", "011", "(?:[589]\\d\\d|787)\\d{7}", [10], 0, "1", 0, 0, 0, 0, "787|939"],
+                PS: ["970", "00", "[2489]2\\d{6}|(?:1\\d|5)\\d{8}", [8, 9, 10], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["[2489]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["5"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1"]]], "0"],
+                PT: ["351", "00", "(?:[26-9]\\d|30)\\d{7}", [9], [["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["2[12]"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[236-9]"]]]],
+                PW: ["680", "01[12]", "(?:[24-8]\\d\\d|345|900)\\d{4}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-9]"]]]],
+                PY: ["595", "00", "59\\d{4,6}|9\\d{5,10}|(?:[2-46-8]\\d|5[0-8])\\d{4,7}", [6, 7, 8, 9, 10, 11], [["(\\d{3})(\\d{3,6})", "$1 $2", ["[2-9]0"], "0$1"], ["(\\d{2})(\\d{5})", "$1 $2", ["[26]1|3[289]|4[1246-8]|7[1-3]|8[1-36]"], "(0$1)"], ["(\\d{3})(\\d{4,5})", "$1 $2", ["2[279]|3[13-5]|4[359]|5|6(?:[34]|7[1-46-8])|7[46-8]|85"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["2[14-68]|3[26-9]|4[1246-8]|6(?:1|75)|7[1-35]|8[1-36]"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["87"]], ["(\\d{3})(\\d{6})", "$1 $2", ["9(?:[5-79]|8[1-6])"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[2-8]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["9"]]], "0"],
+                QA: ["974", "00", "[2-7]\\d{7}|(?:2\\d\\d|800)\\d{4}", [7, 8], [["(\\d{3})(\\d{4})", "$1 $2", ["2[126]|8"]], ["(\\d{4})(\\d{4})", "$1 $2", ["[2-7]"]]]],
+                RE: ["262", "00", "9769\\d{5}|(?:26|[68]\\d)\\d{7}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2689]"], "0$1"]], "0", 0, 0, 0, 0, "26[23]|69|[89]"],
+                RO: ["40", "00", "(?:[237]\\d|[89]0)\\d{7}|[23]\\d{5}", [6, 9], [["(\\d{3})(\\d{3})", "$1 $2", ["2[3-6]", "2[3-6]\\d9"], "0$1"], ["(\\d{2})(\\d{4})", "$1 $2", ["219|31"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[23]1"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[237-9]"], "0$1"]], "0", 0, 0, 0, 0, 0, 0, 0, " int "],
+                RS: ["381", "00", "38[02-9]\\d{6,9}|6\\d{7,9}|90\\d{4,8}|38\\d{5,6}|(?:7\\d\\d|800)\\d{3,9}|(?:[12]\\d|3[0-79])\\d{5,10}", [6, 7, 8, 9, 10, 11, 12], [["(\\d{3})(\\d{3,9})", "$1 $2", ["(?:2[389]|39)0|[7-9]"], "0$1"], ["(\\d{2})(\\d{5,10})", "$1 $2", ["[1-36]"], "0$1"]], "0"],
+                RU: ["7", "810", "[347-9]\\d{9}", [10], [["(\\d{4})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["7(?:1[0-8]|2[1-9])", "7(?:1(?:[0-6]2|7|8[27])|2(?:1[23]|[2-9]2))", "7(?:1(?:[0-6]2|7|8[27])|2(?:13[03-69]|62[013-9]))|72[1-57-9]2"], "8 ($1)", 1], ["(\\d{5})(\\d)(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["7(?:1[0-68]|2[1-9])", "7(?:1(?:[06][3-6]|[18]|2[35]|[3-5][3-5])|2(?:[13][3-5]|[24-689]|7[457]))", "7(?:1(?:0(?:[356]|4[023])|[18]|2(?:3[013-9]|5)|3[45]|43[013-79]|5(?:3[1-8]|4[1-7]|5)|6(?:3[0-35-9]|[4-6]))|2(?:1(?:3[178]|[45])|[24-689]|3[35]|7[457]))|7(?:14|23)4[0-8]|71(?:33|45)[1-79]"], "8 ($1)", 1], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["7"], "8 ($1)", 1], ["(\\d{3})(\\d{3})(\\d{2})(\\d{2})", "$1 $2-$3-$4", ["[3489]"], "8 ($1)", 1]], "8", 0, 0, 0, 0, "3[04-689]|[489]", 0, "8~10"],
+                RW: ["250", "00", "(?:06|[27]\\d\\d|[89]00)\\d{6}", [8, 9], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["0"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[7-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["2"]]], "0"],
+                SA: ["966", "00", "92\\d{7}|(?:[15]|8\\d)\\d{8}", [9, 10], [["(\\d{4})(\\d{5})", "$1 $2", ["9"]], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["5"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["81"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"]]], "0"],
+                SB: ["677", "0[01]", "(?:[1-6]|[7-9]\\d\\d)\\d{4}", [5, 7], [["(\\d{2})(\\d{5})", "$1 $2", ["7|8[4-9]|9(?:[1-8]|9[0-8])"]]]],
+                SC: ["248", "010|0[0-2]", "8000\\d{3}|(?:[249]\\d|64)\\d{5}", [7], [["(\\d)(\\d{3})(\\d{3})", "$1 $2 $3", ["[246]|9[57]"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                SD: ["249", "00", "[19]\\d{8}", [9], [["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[19]"], "0$1"]], "0"],
+                SE: ["46", "00", "(?:[26]\\d\\d|9)\\d{9}|[1-9]\\d{8}|[1-689]\\d{7}|[1-4689]\\d{6}|2\\d{5}", [6, 7, 8, 9, 10], [["(\\d{2})(\\d{2,3})(\\d{2})", "$1-$2 $3", ["20"], "0$1", 0, "$1 $2 $3"], ["(\\d{3})(\\d{4})", "$1-$2", ["9(?:00|39|44)"], "0$1", 0, "$1 $2"], ["(\\d{2})(\\d{3})(\\d{2})", "$1-$2 $3", ["[12][136]|3[356]|4[0246]|6[03]|90[1-9]"], "0$1", 0, "$1 $2 $3"], ["(\\d)(\\d{2,3})(\\d{2})(\\d{2})", "$1-$2 $3 $4", ["8"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d{3})(\\d{2,3})(\\d{2})", "$1-$2 $3", ["1[2457]|2(?:[247-9]|5[0138])|3[0247-9]|4[1357-9]|5[0-35-9]|6(?:[125689]|4[02-57]|7[0-2])|9(?:[125-8]|3[02-5]|4[0-3])"], "0$1", 0, "$1 $2 $3"], ["(\\d{3})(\\d{2,3})(\\d{3})", "$1-$2 $3", ["9(?:00|39|44)"], "0$1", 0, "$1 $2 $3"], ["(\\d{2})(\\d{2,3})(\\d{2})(\\d{2})", "$1-$2 $3 $4", ["1[13689]|2[0136]|3[1356]|4[0246]|54|6[03]|90[1-9]"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1-$2 $3 $4", ["10|7"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d)(\\d{3})(\\d{3})(\\d{2})", "$1-$2 $3 $4", ["8"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1-$2 $3 $4", ["[13-5]|2(?:[247-9]|5[0138])|6(?:[124-689]|7[0-2])|9(?:[125-8]|3[02-5]|4[0-3])"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d{3})(\\d{2})(\\d{2})(\\d{3})", "$1-$2 $3 $4", ["9"], "0$1", 0, "$1 $2 $3 $4"], ["(\\d{3})(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1-$2 $3 $4 $5", ["[26]"], "0$1", 0, "$1 $2 $3 $4 $5"]], "0"],
+                SG: ["65", "0[0-3]\\d", "(?:(?:1\\d|8)\\d\\d|7000)\\d{7}|[3689]\\d{7}", [8, 10, 11], [["(\\d{4})(\\d{4})", "$1 $2", ["[369]|8(?:0[1-3]|[1-9])"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"]], ["(\\d{4})(\\d{4})(\\d{3})", "$1 $2 $3", ["7"]], ["(\\d{4})(\\d{3})(\\d{4})", "$1 $2 $3", ["1"]]]],
+                SH: ["290", "00", "(?:[256]\\d|8)\\d{3}", [4, 5], 0, 0, 0, 0, 0, 0, "[256]"],
+                SI: ["386", "00|10(?:22|66|88|99)", "[1-7]\\d{7}|8\\d{4,7}|90\\d{4,6}", [5, 6, 7, 8], [["(\\d{2})(\\d{3,6})", "$1 $2", ["8[09]|9"], "0$1"], ["(\\d{3})(\\d{5})", "$1 $2", ["59|8"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[37][01]|4[0139]|51|6"], "0$1"], ["(\\d)(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[1-57]"], "(0$1)"]], "0", 0, 0, 0, 0, 0, 0, "00"],
+                SJ: ["47", "00", "0\\d{4}|(?:[489]\\d|[57]9)\\d{6}", [5, 8], 0, 0, 0, 0, 0, 0, "79"],
+                SK: ["421", "00", "[2-689]\\d{8}|[2-59]\\d{6}|[2-5]\\d{5}", [6, 7, 9], [["(\\d)(\\d{2})(\\d{3,4})", "$1 $2 $3", ["21"], "0$1"], ["(\\d{2})(\\d{2})(\\d{2,3})", "$1 $2 $3", ["[3-5][1-8]1", "[3-5][1-8]1[67]"], "0$1"], ["(\\d)(\\d{3})(\\d{3})(\\d{2})", "$1/$2 $3 $4", ["2"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[689]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1/$2 $3 $4", ["[3-5]"], "0$1"]], "0"],
+                SL: ["232", "00", "(?:[2378]\\d|66|99)\\d{6}", [8], [["(\\d{2})(\\d{6})", "$1 $2", ["[236-9]"], "(0$1)"]], "0"],
+                SM: ["378", "00", "(?:0549|[5-7]\\d)\\d{6}", [8, 10], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[5-7]"]], ["(\\d{4})(\\d{6})", "$1 $2", ["0"]]], 0, 0, "([89]\\d{5})$", "0549$1"],
+                SN: ["221", "00", "(?:[378]\\d{4}|93330)\\d{4}", [9], [["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"]], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[379]"]]]],
+                SO: ["252", "00", "[346-9]\\d{8}|[12679]\\d{7}|[1-5]\\d{6}|[1348]\\d{5}", [6, 7, 8, 9], [["(\\d{2})(\\d{4})", "$1 $2", ["8[125]"]], ["(\\d{6})", "$1", ["[134]"]], ["(\\d)(\\d{6})", "$1 $2", ["[15]|2[0-79]|3[0-46-8]|4[0-7]"]], ["(\\d)(\\d{7})", "$1 $2", ["24|[67]"]], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[3478]|64|90"]], ["(\\d{2})(\\d{5,7})", "$1 $2", ["1|28|6[1-35-9]|9[2-9]"]]], "0"],
+                SR: ["597", "00", "(?:[2-5]|68|[78]\\d)\\d{5}", [6, 7], [["(\\d{2})(\\d{2})(\\d{2})", "$1-$2-$3", ["56"]], ["(\\d{3})(\\d{3})", "$1-$2", ["[2-5]"]], ["(\\d{3})(\\d{4})", "$1-$2", ["[6-8]"]]]],
+                SS: ["211", "00", "[19]\\d{8}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[19]"], "0$1"]], "0"],
+                ST: ["239", "00", "(?:22|9\\d)\\d{5}", [7], [["(\\d{3})(\\d{4})", "$1 $2", ["[29]"]]]],
+                SV: ["503", "00", "[267]\\d{7}|[89]00\\d{4}(?:\\d{4})?", [7, 8, 11], [["(\\d{3})(\\d{4})", "$1 $2", ["[89]"]], ["(\\d{4})(\\d{4})", "$1 $2", ["[267]"]], ["(\\d{3})(\\d{4})(\\d{4})", "$1 $2 $3", ["[89]"]]]],
+                SX: ["1", "011", "7215\\d{6}|(?:[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|(5\\d{6})$", "721$1", 0, "721"],
+                SY: ["963", "00", "[1-39]\\d{8}|[1-5]\\d{7}", [8, 9], [["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[1-5]"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["9"], "0$1", 1]], "0"],
+                SZ: ["268", "00", "0800\\d{4}|(?:[237]\\d|900)\\d{6}", [8, 9], [["(\\d{4})(\\d{4})", "$1 $2", ["[0237]"]], ["(\\d{5})(\\d{4})", "$1 $2", ["9"]]]],
+                TA: ["290", "00", "8\\d{3}", [4], 0, 0, 0, 0, 0, 0, "8"],
+                TC: ["1", "011", "(?:[58]\\d\\d|649|900)\\d{7}", [10], 0, "1", 0, "1|([2-479]\\d{6})$", "649$1", 0, "649"],
+                TD: ["235", "00|16", "(?:22|[69]\\d|77)\\d{6}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[2679]"]]], 0, 0, 0, 0, 0, 0, 0, "00"],
+                TG: ["228", "00", "[279]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[279]"]]]],
+                TH: ["66", "00[1-9]", "1\\d{9}|[1689]\\d{8}|[1-57]\\d{7}", [8, 9, 10], [["(\\d)(\\d{3})(\\d{4})", "$1 $2 $3", ["2"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[13-9]"], "0$1"], ["(\\d{4})(\\d{3})(\\d{3})", "$1 $2 $3", ["1"]]], "0"],
+                TJ: ["992", "810", "(?:[02]0|11|[3-57-9]\\d)\\d{7}", [9], [["(\\d{6})(\\d)(\\d{2})", "$1 $2 $3", ["331", "3317"], 0, 1], ["(\\d{3})(\\d{2})(\\d{4})", "$1 $2 $3", ["[34]7|91[78]"], 0, 1], ["(\\d{4})(\\d)(\\d{4})", "$1 $2 $3", ["3[1-5]"], 0, 1], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[02-57-9]|11"], 0, 1]], "8", 0, 0, 0, 0, 0, 0, "8~10"],
+                TK: ["690", "00", "[2-47]\\d{3,6}", [4, 5, 6, 7]],
+                TL: ["670", "00", "7\\d{7}|(?:[2-47]\\d|[89]0)\\d{5}", [7, 8], [["(\\d{3})(\\d{4})", "$1 $2", ["[2-489]|70"]], ["(\\d{4})(\\d{4})", "$1 $2", ["7"]]]],
+                TM: ["993", "810", "[1-6]\\d{7}", [8], [["(\\d{2})(\\d{2})(\\d{2})(\\d{2})", "$1 $2-$3-$4", ["12"], "(8 $1)"], ["(\\d{3})(\\d)(\\d{2})(\\d{2})", "$1 $2-$3-$4", ["[1-5]"], "(8 $1)"], ["(\\d{2})(\\d{6})", "$1 $2", ["6"], "8 $1"]], "8", 0, 0, 0, 0, 0, 0, "8~10"],
+                TN: ["216", "00", "[2-57-9]\\d{7}", [8], [["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[2-57-9]"]]]],
+                TO: ["676", "00", "(?:0800|(?:[5-8]\\d\\d|999)\\d)\\d{3}|[2-8]\\d{4}", [5, 7], [["(\\d{2})(\\d{3})", "$1-$2", ["[2-4]|50|6[09]|7[0-24-69]|8[05]"]], ["(\\d{4})(\\d{3})", "$1 $2", ["0"]], ["(\\d{3})(\\d{4})", "$1 $2", ["[5-9]"]]]],
+                TR: ["90", "00", "4\\d{6}|8\\d{11,12}|(?:[2-58]\\d\\d|900)\\d{7}", [7, 10, 12, 13], [["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["512|8[01589]|90"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["5(?:[0-59]|61)", "5(?:[0-59]|616)", "5(?:[0-59]|6161)"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[24][1-8]|3[1-9]"], "(0$1)", 1], ["(\\d{3})(\\d{3})(\\d{6,7})", "$1 $2 $3", ["80"], "0$1", 1]], "0"],
+                TT: ["1", "011", "(?:[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-46-8]\\d{6})$", "868$1", 0, "868"],
+                TV: ["688", "00", "(?:2|7\\d\\d|90)\\d{4}", [5, 6, 7], [["(\\d{2})(\\d{3})", "$1 $2", ["2"]], ["(\\d{2})(\\d{4})", "$1 $2", ["90"]], ["(\\d{2})(\\d{5})", "$1 $2", ["7"]]]],
+                TW: ["886", "0(?:0[25-79]|19)", "[2-689]\\d{8}|7\\d{9,10}|[2-8]\\d{7}|2\\d{6}", [7, 8, 9, 10, 11], [["(\\d{2})(\\d)(\\d{4})", "$1 $2 $3", ["202"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[258]0"], "0$1"], ["(\\d)(\\d{3,4})(\\d{4})", "$1 $2 $3", ["[23568]|4(?:0[02-48]|[1-47-9])|7[1-9]", "[23568]|4(?:0[2-48]|[1-47-9])|(?:400|7)[1-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[49]"], "0$1"], ["(\\d{2})(\\d{4})(\\d{4,5})", "$1 $2 $3", ["7"], "0$1"]], "0", 0, 0, 0, 0, 0, 0, 0, "#"],
+                TZ: ["255", "00[056]", "(?:[26-8]\\d|41|90)\\d{7}", [9], [["(\\d{3})(\\d{2})(\\d{4})", "$1 $2 $3", ["[89]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[24]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[67]"], "0$1"]], "0"],
+                UA: ["380", "00", "[89]\\d{9}|[3-9]\\d{8}", [9, 10], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["6[12][29]|(?:3[1-8]|4[136-8]|5[12457]|6[49])2|(?:56|65)[24]", "6[12][29]|(?:35|4[1378]|5[12457]|6[49])2|(?:56|65)[24]|(?:3[1-46-8]|46)2[013-9]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["4[45][0-5]|5(?:0|6[37])|6(?:[12][018]|[36-8])|7|89|9[1-9]|(?:48|57)[0137-9]", "4[45][0-5]|5(?:0|6(?:3[14-7]|7))|6(?:[12][018]|[36-8])|7|89|9[1-9]|(?:48|57)[0137-9]"], "0$1"], ["(\\d{4})(\\d{5})", "$1 $2", ["[3-6]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[89]"], "0$1"]], "0", 0, 0, 0, 0, 0, 0, "0~0"],
+                UG: ["256", "00[057]", "800\\d{6}|(?:[29]0|[347]\\d)\\d{7}", [9], [["(\\d{4})(\\d{5})", "$1 $2", ["202", "2024"], "0$1"], ["(\\d{3})(\\d{6})", "$1 $2", ["[27-9]|4(?:6[45]|[7-9])"], "0$1"], ["(\\d{2})(\\d{7})", "$1 $2", ["[34]"], "0$1"]], "0"],
+                US: ["1", "011", "[2-9]\\d{9}", [10], [["(\\d{3})(\\d{3})(\\d{4})", "($1) $2-$3", ["[2-9]"], 0, 1, "$1-$2-$3"]], "1", 0, 0, 0, 0, 0, [["(?:2(?:0[1-35-9]|1[02-9]|2[03-589]|3[149]|4[08]|5[1-46]|6[0279]|7[0269]|8[13])|3(?:0[1-57-9]|1[02-9]|2[01356]|3[0-24679]|4[167]|5[12]|6[014]|8[056])|4(?:0[124-9]|1[02-579]|2[3-5]|3[0245]|4[02357]|58|6[39]|7[0589]|8[04])|5(?:0[1-57-9]|1[0235-8]|20|3[0149]|4[01]|5[19]|6[1-47]|7[013-5]|8[056])|6(?:0[1-35-9]|1[024-9]|2[03689]|[34][016]|5[0179]|6[0-279]|78|8[0-29])|7(?:0[1-46-8]|1[2-9]|2[04-7]|3[1247]|4[037]|5[47]|6[02359]|7[02-59]|8[156])|8(?:0[1-68]|1[02-8]|2[08]|3[0-289]|4[03578]|5[046-9]|6[02-5]|7[028])|9(?:0[1346-9]|1[02-9]|2[0589]|3[0146-8]|4[01579]|5[12469]|7[0-389]|8[04-69]))[2-9]\\d{6}"], [""], ["8(?:00|33|44|55|66|77|88)[2-9]\\d{6}"], ["900[2-9]\\d{6}"], ["52(?:3(?:[2-46-9][02-9]\\d|5(?:[02-46-9]\\d|5[0-46-9]))|4(?:[2-478][02-9]\\d|5(?:[034]\\d|2[024-9]|5[0-46-9])|6(?:0[1-9]|[2-9]\\d)|9(?:[05-9]\\d|2[0-5]|49)))\\d{4}|52[34][2-9]1[02-9]\\d{4}|5(?:00|2[12]|33|44|66|77|88)[2-9]\\d{6}"]]],
+                UY: ["598", "0(?:0|1[3-9]\\d)", "4\\d{9}|[249]\\d{7}|(?:[49]\\d|80)\\d{5}", [7, 8, 10], [["(\\d{3})(\\d{4})", "$1 $2", ["405|8|90"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["9"], "0$1"], ["(\\d{4})(\\d{4})", "$1 $2", ["[24]"]], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["4"], "0$1"]], "0", 0, 0, 0, 0, 0, 0, "00", " int. "],
+                UZ: ["998", "810", "55501\\d{4}|(?:33|[679]\\d|88)\\d{7}", [9], [["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[35-9]"], "8 $1"]], "8", 0, 0, 0, 0, 0, 0, "8~10"],
+                VA: ["39", "00", "0\\d{5,10}|3[0-8]\\d{7,10}|55\\d{8}|8\\d{5}(?:\\d{2,4})?|(?:1\\d|39)\\d{7,8}", [6, 7, 8, 9, 10, 11], 0, 0, 0, 0, 0, 0, "06698"],
+                VC: ["1", "011", "(?:[58]\\d\\d|784|900)\\d{7}", [10], 0, "1", 0, "1|([2-7]\\d{6})$", "784$1", 0, "784"],
+                VE: ["58", "00", "[68]00\\d{7}|(?:[24]\\d|[59]0)\\d{8}", [10], [["(\\d{3})(\\d{7})", "$1-$2", ["[24-689]"], "0$1"]], "0"],
+                VG: ["1", "011", "(?:284|[58]\\d\\d|900)\\d{7}", [10], 0, "1", 0, "1|([2-578]\\d{6})$", "284$1", 0, "284"],
+                VI: ["1", "011", "[58]\\d{9}|(?:34|90)0\\d{7}", [10], 0, "1", 0, "1|([2-9]\\d{6})$", "340$1", 0, "340"],
+                VN: ["84", "00", "[12]\\d{9}|[135-9]\\d{8}|[16]\\d{7}|[16-8]\\d{6}", [7, 8, 9, 10], [["(\\d{2})(\\d{5})", "$1 $2", ["80"], "0$1", 1], ["(\\d{4})(\\d{4,6})", "$1 $2", ["1"], 0, 1], ["(\\d{2})(\\d{3})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["[69]"], "0$1", 1], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[3578]"], "0$1", 1], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["2[48]"], "0$1", 1], ["(\\d{3})(\\d{4})(\\d{3})", "$1 $2 $3", ["2"], "0$1", 1]], "0"],
+                VU: ["678", "00", "[48]8\\d{3}|(?:[23]|[579]\\d\\d)\\d{4}", [5, 7], [["(\\d{3})(\\d{4})", "$1 $2", ["[579]"]]]],
+                WF: ["681", "00", "(?:40|72)\\d{4}|8\\d{5}(?:\\d{3})?", [6, 9], [["(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3", ["[478]"]], ["(\\d{3})(\\d{2})(\\d{2})(\\d{2})", "$1 $2 $3 $4", ["8"]]]],
+                WS: ["685", "0", "(?:[2-6]|8\\d{5})\\d{4}|[78]\\d{6}|[68]\\d{5}", [5, 6, 7, 10], [["(\\d{5})", "$1", ["[2-5]|6[1-9]"]], ["(\\d{3})(\\d{3,7})", "$1 $2", ["[68]"]], ["(\\d{2})(\\d{5})", "$1 $2", ["7"]]]],
+                XK: ["383", "00", "[23]\\d{7,8}|(?:4\\d\\d|[89]00)\\d{5}", [8, 9], [["(\\d{3})(\\d{5})", "$1 $2", ["[89]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3})", "$1 $2 $3", ["[2-4]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[23]"], "0$1"]], "0"],
+                YE: ["967", "00", "(?:1|7\\d)\\d{7}|[1-7]\\d{6}", [7, 8, 9], [["(\\d)(\\d{3})(\\d{3,4})", "$1 $2 $3", ["[1-6]|7[24-68]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["7"], "0$1"]], "0"],
+                YT: ["262", "00", "80\\d{7}|(?:26|63)9\\d{6}", [9], 0, "0", 0, 0, 0, 0, "269|63"],
+                ZA: ["27", "00", "[1-79]\\d{8}|8\\d{4,9}", [5, 6, 7, 8, 9, 10], [["(\\d{2})(\\d{3,4})", "$1 $2", ["8[1-4]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{2,3})", "$1 $2 $3", ["8[1-4]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["860"], "0$1"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["[1-9]"], "0$1"], ["(\\d{3})(\\d{3})(\\d{4})", "$1 $2 $3", ["8"], "0$1"]], "0"],
+                ZM: ["260", "00", "(?:63|80)0\\d{6}|(?:21|[79]\\d)\\d{7}", [9], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[28]"], "0$1"], ["(\\d{2})(\\d{7})", "$1 $2", ["[79]"], "0$1"]], "0"],
+                ZW: ["263", "00", "2(?:[0-57-9]\\d{6,8}|6[0-24-9]\\d{6,7})|[38]\\d{9}|[35-8]\\d{8}|[3-6]\\d{7}|[1-689]\\d{6}|[1-3569]\\d{5}|[1356]\\d{4}", [5, 6, 7, 8, 9, 10], [["(\\d{3})(\\d{3,5})", "$1 $2", ["2(?:0[45]|2[278]|[49]8)|3(?:[09]8|17)|6(?:[29]8|37|75)|[23][78]|(?:33|5[15]|6[68])[78]"], "0$1"], ["(\\d)(\\d{3})(\\d{2,4})", "$1 $2 $3", ["[49]"], "0$1"], ["(\\d{3})(\\d{4})", "$1 $2", ["80"], "0$1"], ["(\\d{2})(\\d{7})", "$1 $2", ["24|8[13-59]|(?:2[05-79]|39|5[45]|6[15-8])2", "2(?:02[014]|4|[56]20|[79]2)|392|5(?:42|525)|6(?:[16-8]21|52[013])|8[13-59]"], "(0$1)"], ["(\\d{2})(\\d{3})(\\d{4})", "$1 $2 $3", ["7"], "0$1"], ["(\\d{3})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["2(?:1[39]|2[0157]|[378]|[56][14])|3(?:12|29)", "2(?:1[39]|2[0157]|[378]|[56][14])|3(?:123|29)"], "0$1"], ["(\\d{4})(\\d{6})", "$1 $2", ["8"], "0$1"], ["(\\d{2})(\\d{3,5})", "$1 $2", ["1|2(?:0[0-36-9]|12|29|[56])|3(?:1[0-689]|[24-6])|5(?:[0236-9]|1[2-4])|6(?:[013-59]|7[0-46-9])|(?:33|55|6[68])[0-69]|(?:29|3[09]|62)[0-79]"], "0$1"], ["(\\d{2})(\\d{3})(\\d{3,4})", "$1 $2 $3", ["29[013-9]|39|54"], "0$1"], ["(\\d{4})(\\d{3,5})", "$1 $2", ["(?:25|54)8", "258|5483"], "0$1"]], "0"]
+            },
+            nonGeographic: {
+                800: ["800", 0, "[1-9]\\d{7}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[1-9]"]]], 0, 0, 0, 0, 0, 0, [0, 0, ["[1-9]\\d{7}"]]],
+                808: ["808", 0, "[1-9]\\d{7}", [8], [["(\\d{4})(\\d{4})", "$1 $2", ["[1-9]"]]], 0, 0, 0, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, ["[1-9]\\d{7}"]]],
+                870: ["870", 0, "7\\d{11}|[35-7]\\d{8}", [9, 12], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["[35-7]"]]], 0, 0, 0, 0, 0, 0, [0, ["(?:[356]|774[45])\\d{8}|7[6-8]\\d{7}"]]],
+                878: ["878", 0, "10\\d{10}", [12], [["(\\d{2})(\\d{5})(\\d{5})", "$1 $2 $3", ["1"]]], 0, 0, 0, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0, 0, ["10\\d{10}"]]],
+                881: ["881", 0, "[0-36-9]\\d{8}", [9], [["(\\d)(\\d{3})(\\d{5})", "$1 $2 $3", ["[0-36-9]"]]], 0, 0, 0, 0, 0, 0, [0, ["[0-36-9]\\d{8}"]]],
+                882: ["882", 0, "[13]\\d{6}(?:\\d{2,5})?|285\\d{9}|(?:[19]\\d|49)\\d{6}", [7, 8, 9, 10, 11, 12], [["(\\d{2})(\\d{5})", "$1 $2", ["16|342"]], ["(\\d{2})(\\d{6})", "$1 $2", ["4"]], ["(\\d{2})(\\d{2})(\\d{4})", "$1 $2 $3", ["[19]"]], ["(\\d{2})(\\d{4})(\\d{3})", "$1 $2 $3", ["3[23]"]], ["(\\d{2})(\\d{3,4})(\\d{4})", "$1 $2 $3", ["1"]], ["(\\d{2})(\\d{4})(\\d{4})", "$1 $2 $3", ["34[57]"]], ["(\\d{3})(\\d{4})(\\d{4})", "$1 $2 $3", ["34"]], ["(\\d{2})(\\d{4,5})(\\d{5})", "$1 $2 $3", ["[1-3]"]]], 0, 0, 0, 0, 0, 0, [0, ["342\\d{4}|(?:337|49)\\d{6}|3(?:2|47|7\\d{3})\\d{7}", [7, 8, 9, 10, 12]], 0, 0, 0, 0, 0, 0, ["1(?:3(?:0[0347]|[13][0139]|2[035]|4[013568]|6[0459]|7[06]|8[15-8]|9[0689])\\d{4}|6\\d{5,10})|(?:(?:285\\d\\d|3(?:45|[69]\\d{3}))\\d|9[89])\\d{6}"]]],
+                883: ["883", 0, "51\\d{7}(?:\\d{3})?", [9, 12], [["(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3", ["510"]], ["(\\d{3})(\\d{3})(\\d{3})(\\d{3})", "$1 $2 $3 $4", ["510"]], ["(\\d{4})(\\d{4})(\\d{4})", "$1 $2 $3", ["5"]]], 0, 0, 0, 0, 0, 0, [0, 0, 0, 0, 0, 0, 0, 0, ["51[013]0\\d{8}|5100\\d{5}"]]],
+                888: ["888", 0, "\\d{11}", [11], [["(\\d{3})(\\d{3})(\\d{5})", "$1 $2 $3"]], 0, 0, 0, 0, 0, 0, [0, 0, 0, 0, 0, 0, ["\\d{11}"]]],
+                979: ["979", 0, "[1359]\\d{8}", [9], [["(\\d)(\\d{4})(\\d{4})", "$1 $2 $3", ["[1359]"]]], 0, 0, 0, 0, 0, 0, [0, 0, 0, ["[1359]\\d{8}"]]]
             }
-            add(t) {
-                this.memoryManaged.add(t),
-                t[i].add(this),
-                t[e]()
-            }
-            release() {
-                for (const e of this.memoryManaged)
-                    e[i].delete(this),
-                    e[t]();
-                this.memoryManaged.clear()
-            }
-        }
-        const o = "_@f";
-        function a(r) {
-            const a = new Map
-              , s = new Map
-              , c = new Map;
-            return {
-                encode: function e(t) {
-                    if ("object" == typeof t) {
-                        if (null == t)
-                            return [t];
-                        if (t instanceof ArrayBuffer)
-                            return [t];
-                        const r = [];
-                        if (Array.isArray(t)) {
-                            return [t.map((t=>{
-                                const [i,n=[]] = e(t);
-                                return r.push(...n),
-                                i
-                            }
-                            )), r]
-                        }
-                        return [Object.keys(t).reduce(((i,n)=>{
-                            const [o,a=[]] = e(t[n]);
-                            return r.push(...a),
-                            {
-                                ...i,
-                                [n]: o
-                            }
-                        }
-                        ), {}), r]
-                    }
-                    if ("function" == typeof t) {
-                        if (a.has(t)) {
-                            const e = a.get(t);
-                            return [{
-                                [o]: e
-                            }]
-                        }
-                        const e = r.uuid();
-                        return a.set(t, e),
-                        s.set(e, t),
-                        [{
-                            [o]: e
-                        }]
-                    }
-                    return [t]
-                },
-                decode: l,
-                async call(r, o) {
-                    const a = new n
-                      , c = s.get(r);
-                    if (null == c)
-                        throw new Error("You attempted to call a function that was already released.");
-                    try {
-                        const r = (u = c,
-                        Boolean(u && u[e] && u[t]) ? [a, ...c[i]] : [a]);
-                        return await c(...l(o, r))
-                    } finally {
-                        a.release()
-                    }
-                    var u
-                },
-                release(e) {
-                    const t = s.get(e);
-                    t && (s.delete(e),
-                    a.delete(t))
-                },
-                terminate() {
-                    a.clear(),
-                    s.clear(),
-                    c.clear()
-                }
-            };
-            function l(n, a) {
-                if ("object" == typeof n) {
-                    if (null == n)
-                        return n;
-                    if (n instanceof ArrayBuffer)
-                        return n;
-                    if (Array.isArray(n))
-                        return n.map((e=>l(e, a)));
-                    if (o in n) {
-                        const o = n["_@f"];
-                        if (c.has(o))
-                            return c.get(o);
-                        let s = 0
-                          , l = !1;
-                        const u = ()=>{
-                            s -= 1,
-                            0 === s && (l = !0,
-                            c.delete(o),
-                            r.release(o))
-                        }
-                          , d = ()=>{
-                            s += 1
-                        }
-                          , b = new Set(a)
-                          , f = (...e)=>{
-                            if (l)
-                                throw new Error("You attempted to call a function that was already released.");
-                            if (!c.has(o))
-                                throw new Error("You attempted to call a function that was already revoked.");
-                            return r.call(o, e)
-                        }
-                        ;
-                        Object.defineProperties(f, {
-                            [t]: {
-                                value: u,
-                                writable: !1
-                            },
-                            [e]: {
-                                value: d,
-                                writable: !1
-                            },
-                            [i]: {
-                                value: b,
-                                writable: !1
-                            }
-                        });
-                        for (const e of b)
-                            e.add(f);
-                        return c.set(o, f),
-                        f
-                    }
-                    return Object.keys(n).reduce(((e,t)=>({
-                        ...e,
-                        [t]: l(n[t], a)
-                    })), {})
-                }
-                return n
-            }
-        }
-        function s() {
-            return `${c()}-${c()}-${c()}-${c()}`
-        }
-        function c() {
-            return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)
-        }
-        const l = "production"
-          , u = "0.0.352"
-          , d = "596341d0w7f760444pf8dd6477mf2838468";
-        async function b(e, t="") {
-            if (e.includes(self.location.origin) && !e.match(/\/\.well-known\/shopify\/monorail\/unstable\/produce_batch/))
-                return !1;
-            const r = new self.Blob([t],{
-                type: "text/plain"
-            });
-            try {
-                return self.fetch(e, {
-                    method: "POST",
-                    keepalive: !0,
-                    body: r
-                }),
-                !0
-            } catch {
-                return !1
-            }
-        }
-        function f() {
-            try {
-                return self instanceof DedicatedWorkerGlobalScope
-            } catch (e) {
-                return !1
-            }
-        }
-        var m = r(700)
-          , p = r(747);
-        class w extends Error {
-            constructor(...e) {
-                super(...e),
-                Error.captureStackTrace && Error.captureStackTrace(this, w)
-            }
-        }
-        class h extends Error {
-            constructor(...e) {
-                super(...e),
-                this.message = "Excessive Stacktrace: May indicate infinite loop forming"
-            }
-        }
-        const g = {
-            development: "https://web-pixels-manager.myshopify.io/bugsnag",
-            production: "https://notify.bugsnag.com",
-            test: "https://localhost"
         };
-        function v(e, t, r, i=!0) {
-            try {
-                const n = {
-                    ...i ? Object.getOwnPropertyDescriptor(e, t) : {},
-                    ...r
-                };
-                return Object.defineProperty(e, t, n)
-            } catch (n) {
-                return e
+        var o, u = 2, s = 17, a = 3, r = "0-9０-９٠-٩۰-۹", i = "".concat("-‐-―−ー－").concat("／/").concat("．.").concat("  ­​⁠　").concat("()（）［］\\[\\]").concat("~⁓∼～");
+        (o = function o(d) {
+            !function(d, $) {
+                if (!(d instanceof $))
+                    throw new TypeError("Cannot call a class as a function")
+            }(this, o),
+            this.name = this.constructor.name,
+            this.message = d,
+            this.stack = new Error(d).stack
+        }
+        ).prototype = Object.create(Error.prototype),
+        o.prototype.constructor = o;
+        var l = function(d, $) {
+            d = d.split("-"),
+            $ = $.split("-");
+            for (var t = d[0].split("."), e = $[0].split("."), n = 0; n < 3; n++) {
+                var r = Number(t[n])
+                  , i = Number(e[n]);
+                if (i < r)
+                    return 1;
+                if (r < i)
+                    return -1;
+                if (!isNaN(r) && isNaN(i))
+                    return 1;
+                if (isNaN(r) && !isNaN(i))
+                    return -1
             }
-        }
-        class y extends Error {
-            constructor(...e) {
-                super(...e),
-                this.name = "InsecureUrlError"
-            }
-        }
-        class x extends Error {
-            constructor(...e) {
-                super(...e),
-                this.name = "InsecureUrlError"
-            }
-        }
-        function k() {
-            const e = XMLHttpRequest.prototype.open;
-            return XMLHttpRequest.prototype.open = function(t, r) {
-                const i = new URL(r);
-                if ("https:" !== i.protocol)
-                    throw new x(`URL must be secure (HTTPS): ${i.href}`);
-                if (i.href.includes(self.location.origin))
-                    throw new x(`Request are not allowed to the same origin: ${i.href}`);
-                e.apply(this, arguments)
-            }
-            ,
-            XMLHttpRequest
-        }
-        const S = {
-            Request: !1,
-            Response: !1,
-            Headers: !1,
-            XMLHttpRequest: !1,
-            XMLHttpRequestEventTarget: !1,
-            XMLHttpRequestUpload: !1
-        }
-          , O = {
-            BarcodeDetector: !0,
-            BroadcastChannel: !0,
-            Cache: !0,
-            CustomEvent: !0,
-            FormData: !0,
-            ImageData: !0,
-            NetworkInformation: !0,
-            ServiceWorkerRegistration: !0,
-            WebSocket: !0,
-            Browser: !0,
-            WorkerBrowser: !0,
-            MessageChannel: !0,
-            MessagePort: !0,
-            crypto: !0,
-            Crypto: !0,
-            CryptoKey: !0,
-            SubtleCrypto: !0,
-            TextDecoder: !0,
-            TextDecoderStream: !0,
-            TextEncoder: !0,
-            TextEncoderStream: !0,
-            Request: !1,
-            Response: !1,
-            Headers: !1,
-            indexedDB: !0,
-            IDBCursor: !0,
-            IDBCursorWithValue: !0,
-            IDBDatabase: !0,
-            IDBFactory: !0,
-            IDBIndex: !0,
-            IDBKeyRange: !0,
-            IDBObjectStore: !0,
-            IDBOpenDBRequest: !0,
-            IDBRequest: !0,
-            IDBTransaction: !0,
-            IDBVersionChangeEvent: !0,
-            Navigator: !0,
-            navigator: !0,
-            Notification: !0,
-            NotificationEvent: !0,
-            EventSource: !0,
-            WebGL2RenderingContext: !0,
-            WebGLActiveInfo: !0,
-            WebGLBuffer: !0,
-            WebGLFramebuffer: !0,
-            WebGLProgram: !0,
-            WebGLQuery: !0,
-            WebGLRenderbuffer: !0,
-            WebGLRenderingContext: !0,
-            WebGLSampler: !0,
-            WebGLShader: !0,
-            WebGLShaderPrecisionFormat: !0,
-            WebGLSync: !0,
-            WebGLTexture: !0,
-            WebGLTransformFeedback: !0,
-            WebGLUniformLocation: !0,
-            WebGLVertexArrayObject: !0,
-            Path2D: !0,
-            Worker: !0,
-            WorkerLocation: !0,
-            WorkerNavigator: !0,
-            ServiceWorker: !0,
-            ServiceWorkerContainer: !0,
-            XMLHttpRequest: !0,
-            XMLHttpRequestEventTarget: !0,
-            XMLHttpRequestUpload: !0,
-            ArrayBuffer: !1,
-            Uint8Array: !0,
-            Int8Array: !0,
-            Uint16Array: !0,
-            Int16Array: !0,
-            Uint32Array: !0,
-            Int32Array: !0,
-            Float32Array: !0,
-            Float64Array: !0,
-            Uint8ClampedArray: !0,
-            BigUint64Array: !0,
-            BigInt64Array: !0,
-            DataView: !0,
-            PushSubscriptionOptions: !0,
-            PushSubscription: !0,
-            PushManager: !0,
-            Permissions: !0,
-            PermissionStatus: !0,
-            PeriodicSyncManager: !0,
-            PaymentInstruments: !0,
-            NavigatorUAData: !0,
-            BackgroundFetchRegistration: !0,
-            BackgroundFetchRecord: !0,
-            BackgroundFetchManager: !0,
-            WritableStreamDefaultWriter: !0,
-            WritableStreamDefaultController: !0,
-            WritableStream: !0,
-            ReadableStreamDefaultReader: !0,
-            ReadableStreamDefaultController: !0,
-            ReadableStreamBYOBRequest: !0,
-            ReadableStreamBYOBReader: !0,
-            ReadableStream: !0,
-            ReadableByteStreamController: !0,
-            RTCEncodedVideoFrame: !0,
-            RTCEncodedAudioFrame: !0,
-            RTCDataChannel: !0,
-            RTCTransformEvent: !0,
-            RTCRtpScriptTransformer: !0,
-            OffscreenCanvasRenderingContext2D: !0,
-            OffscreenCanvas: !0,
-            FontFace: !0,
-            FontFaceSet: !0,
-            FileReaderSync: !0,
-            FileReader: !0,
-            FileList: !0,
-            File: !0,
-            FileSystemDirectoryHandle: !0,
-            FileSystemFileHandle: !0,
-            FileSystemHandle: !0,
-            FileSystemWritableFileStream: !0,
-            FileSystemSyncAccessHandle: !0,
-            webkitRequestFileSystem: !0,
-            webkitRequestFileSystemSync: !0,
-            webkitResolveLocalFileSystemSyncURL: !0,
-            webkitResolveLocalFileSystemURL: !0,
-            DOMStringList: !0,
-            DOMRectReadOnly: !0,
-            DOMRect: !0,
-            DOMQuad: !0,
-            DOMPointReadOnly: !0,
-            DOMPoint: !0,
-            DOMMatrixReadOnly: !0,
-            DOMMatrix: !0,
-            DOMException: !0,
-            CompressionStream: !0,
-            Atomics: !0,
-            WebAssembly: !0,
-            AudioData: !0,
-            EncodedAudioChunk: !0,
-            EncodedVideoChunk: !0,
-            ImageTrack: !0,
-            ImageTrackList: !0,
-            VideoColorSpace: !0,
-            VideoFrame: !0,
-            AudioDecoder: !0,
-            AudioEncoder: !0,
-            ImageDecoder: !0,
-            VideoDecoder: !0,
-            VideoEncoder: !0,
-            AudioTrackConfiguration: !0,
-            VideoTrackConfiguration: !0,
-            Lock: !0,
-            LockManager: !0,
-            WebTransport: !0,
-            WebTransportBidirectionalStream: !0,
-            WebTransportDatagramDuplexStream: !0,
-            WebTransportError: !0,
-            Serial: !0,
-            SerialPort: !0,
-            USB: !0,
-            USBAlternateInterface: !0,
-            USBConfiguration: !0,
-            USBConnectionEvent: !0,
-            USBDevice: !0,
-            USBEndpoint: !0,
-            USBInTransferResult: !0,
-            USBInterface: !0,
-            USBIsochronousInTransferPacket: !0,
-            USBIsochronousInTransferResult: !0,
-            USBIsochronousOutTransferPacket: !0,
-            USBIsochronousOutTransferResult: !0,
-            USBOutTransferResult: !0
+            return d[1] && $[1] ? d[1] > $[1] ? 1 : d[1] < $[1] ? -1 : 0 : !d[1] && $[1] ? 1 : d[1] && !$[1] ? -1 : 0
         };
-        function R(e, t) {
-            let r = e;
-            do {
-                Object.getOwnPropertyNames(r).filter((e=>e in t && !1 !== t[e])).forEach((e=>{
-                    try {
-                        let i;
-                        "object" == typeof t[e] ? (i = r[e],
-                        R(i, t[e])) : i = !0 === t[e] ? void 0 : t[e],
-                        v(r, e, {
-                            value: i,
-                            configurable: !1,
-                            enumerable: !1,
-                            writable: !1
-                        }, !1)
-                    } catch (i) {}
-                }
-                )),
-                r = Object.getPrototypeOf(r)
-            } while (r !== Object.prototype)
+        function c(d) {
+            return (c = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function c(d) {
+                return typeof d
+            }
+            : function c(d) {
+                return d && "function" == typeof Symbol && d.constructor === Symbol && d !== Symbol.prototype ? "symbol" : typeof d
+            }
+            )(d)
         }
-        function E(e, t=self) {
-            var r;
-            R(t, {
-                ...e ? O : S,
-                fetch: (r = t.fetch,
-                Object.freeze(String.prototype),
-                Object.freeze(Request.prototype),
-                Object.freeze(URL.prototype),
-                v(self, "String", {
-                    writable: !1,
-                    configurable: !1
-                }),
-                v(self, "Request", {
-                    writable: !1,
-                    configurable: !1
-                }),
-                v(self, "URL", {
-                    writable: !1,
-                    configurable: !1
-                }),
-                (e,t)=>{
-                    const i = e instanceof Request ? e : new Request(e)
-                      , n = new URL(i.url);
-                    if ("https:" !== n.protocol)
-                        throw new y(`URL must be secure (HTTPS): ${n.href}`);
-                    if (n.href.includes(self.location.origin) && !n.href.match(/\/\.well-known\/shopify\/monorail\/unstable\/produce_batch/))
-                        throw new y(`Request are not allowed to the same origin: ${n.href}`);
-                    return r(i, {
-                        ...t
+        function h(d, $) {
+            if (!(d instanceof $))
+                throw new TypeError("Cannot call a class as a function")
+        }
+        function f(d, $) {
+            for (var t = 0; t < $.length; t++) {
+                var e = $[t];
+                e.enumerable = e.enumerable || !1,
+                e.configurable = !0,
+                "value"in e && (e.writable = !0),
+                Object.defineProperty(d, e.key, e)
+            }
+        }
+        function y(d, $, t) {
+            return $ && f(d.prototype, $),
+            t && f(d, t),
+            d
+        }
+        var g = "1.2.0"
+          , m = "1.7.35"
+          , C = " ext. "
+          , p = /^\d+$/
+          , E = function() {
+            function $(d) {
+                h(this, $),
+                function(d) {
+                    if (!d)
+                        throw new Error("[libphonenumber-js] `metadata` argument not passed. Check your arguments.");
+                    if (!_(d) || !_(d.countries))
+                        throw new Error("[libphonenumber-js] `metadata` argument was passed but it's not a valid metadata. Must be an object having `.countries` child object property. Got ".concat(_(d) ? "an object of shape: { " + Object.keys(d).join(", ") + " }" : "a " + N(d) + ": " + d, "."))
+                }(d),
+                this.metadata = d,
+                P.call(this, d)
+            }
+            return y($, [{
+                key: "getCountries",
+                value: function() {
+                    return Object.keys(this.metadata.countries).filter(function(d) {
+                        return "001" !== d
                     })
                 }
-                ),
-                XMLHttpRequest: k()
+            }, {
+                key: "getCountryMetadata",
+                value: function(d) {
+                    return this.metadata.countries[d]
+                }
+            }, {
+                key: "nonGeographic",
+                value: function() {
+                    if (!(this.v1 || this.v2 || this.v3))
+                        return this.metadata.nonGeographic || this.metadata.nonGeographical
+                }
+            }, {
+                key: "hasCountry",
+                value: function(d) {
+                    return this.getCountryMetadata(d) !== undefined
+                }
+            }, {
+                key: "hasCallingCode",
+                value: function(d) {
+                    if (this.getCountryCodesForCallingCode(d))
+                        return !0;
+                    if (this.nonGeographic()) {
+                        if (this.nonGeographic()[d])
+                            return !0
+                    } else {
+                        d = this.countryCallingCodes()[d];
+                        if (d && 1 === d.length && "001" === d[0])
+                            return !0
+                    }
+                }
+            }, {
+                key: "isNonGeographicCallingCode",
+                value: function(d) {
+                    return this.nonGeographic() ? !!this.nonGeographic()[d] : !this.getCountryCodesForCallingCode(d)
+                }
+            }, {
+                key: "country",
+                value: function(d) {
+                    return this.selectNumberingPlan(d)
+                }
+            }, {
+                key: "selectNumberingPlan",
+                value: function(d, $) {
+                    if (d && p.test(d) && ($ = d,
+                    d = null),
+                    d && "001" !== d) {
+                        if (!this.hasCountry(d))
+                            throw new Error("Unknown country: ".concat(d));
+                        this.numberingPlan = new b(this.getCountryMetadata(d),this)
+                    } else if ($) {
+                        if (!this.hasCallingCode($))
+                            throw new Error("Unknown calling code: ".concat($));
+                        this.numberingPlan = new b(this.getNumberingPlanMetadata($),this)
+                    } else
+                        this.numberingPlan = undefined;
+                    return this
+                }
+            }, {
+                key: "getCountryCodesForCallingCode",
+                value: function(d) {
+                    d = this.countryCallingCodes()[d];
+                    if (d && (1 !== d.length || 3 !== d[0].length))
+                        return d
+                }
+            }, {
+                key: "getCountryCodeForCallingCode",
+                value: function(d) {
+                    d = this.getCountryCodesForCallingCode(d);
+                    if (d)
+                        return d[0]
+                }
+            }, {
+                key: "getNumberingPlanMetadata",
+                value: function(d) {
+                    var $ = this.getCountryCodeForCallingCode(d);
+                    if ($)
+                        return this.getCountryMetadata($);
+                    if (this.nonGeographic()) {
+                        $ = this.nonGeographic()[d];
+                        if ($)
+                            return $
+                    } else {
+                        d = this.countryCallingCodes()[d];
+                        if (d && 1 === d.length && "001" === d[0])
+                            return this.metadata.countries["001"]
+                    }
+                }
+            }, {
+                key: "countryCallingCode",
+                value: function() {
+                    return this.numberingPlan.callingCode()
+                }
+            }, {
+                key: "IDDPrefix",
+                value: function() {
+                    return this.numberingPlan.IDDPrefix()
+                }
+            }, {
+                key: "defaultIDDPrefix",
+                value: function() {
+                    return this.numberingPlan.defaultIDDPrefix()
+                }
+            }, {
+                key: "nationalNumberPattern",
+                value: function() {
+                    return this.numberingPlan.nationalNumberPattern()
+                }
+            }, {
+                key: "possibleLengths",
+                value: function() {
+                    return this.numberingPlan.possibleLengths()
+                }
+            }, {
+                key: "formats",
+                value: function() {
+                    return this.numberingPlan.formats()
+                }
+            }, {
+                key: "nationalPrefixForParsing",
+                value: function() {
+                    return this.numberingPlan.nationalPrefixForParsing()
+                }
+            }, {
+                key: "nationalPrefixTransformRule",
+                value: function() {
+                    return this.numberingPlan.nationalPrefixTransformRule()
+                }
+            }, {
+                key: "leadingDigits",
+                value: function() {
+                    return this.numberingPlan.leadingDigits()
+                }
+            }, {
+                key: "hasTypes",
+                value: function() {
+                    return this.numberingPlan.hasTypes()
+                }
+            }, {
+                key: "type",
+                value: function(d) {
+                    return this.numberingPlan.type(d)
+                }
+            }, {
+                key: "ext",
+                value: function() {
+                    return this.numberingPlan.ext()
+                }
+            }, {
+                key: "countryCallingCodes",
+                value: function() {
+                    return this.v1 ? this.metadata.country_phone_code_to_countries : this.metadata.country_calling_codes
+                }
+            }, {
+                key: "chooseCountryByCountryCallingCode",
+                value: function(d) {
+                    return this.selectNumberingPlan(d)
+                }
+            }, {
+                key: "hasSelectedNumberingPlan",
+                value: function() {
+                    return this.numberingPlan !== undefined
+                }
+            }]),
+            $
+        }()
+          , b = function() {
+            function t(d, $) {
+                h(this, t),
+                this.globalMetadataObject = $,
+                this.metadata = d,
+                P.call(this, $.metadata)
+            }
+            return y(t, [{
+                key: "callingCode",
+                value: function() {
+                    return this.metadata[0]
+                }
+            }, {
+                key: "getDefaultCountryMetadataForRegion",
+                value: function() {
+                    return this.globalMetadataObject.getNumberingPlanMetadata(this.callingCode())
+                }
+            }, {
+                key: "IDDPrefix",
+                value: function() {
+                    if (!this.v1 && !this.v2)
+                        return this.metadata[1]
+                }
+            }, {
+                key: "defaultIDDPrefix",
+                value: function() {
+                    if (!this.v1 && !this.v2)
+                        return this.metadata[12]
+                }
+            }, {
+                key: "nationalNumberPattern",
+                value: function() {
+                    return this.v1 || this.v2 ? this.metadata[1] : this.metadata[2]
+                }
+            }, {
+                key: "possibleLengths",
+                value: function() {
+                    if (!this.v1)
+                        return this.metadata[this.v2 ? 2 : 3]
+                }
+            }, {
+                key: "_getFormats",
+                value: function(d) {
+                    return d[this.v1 ? 2 : this.v2 ? 3 : 4]
+                }
+            }, {
+                key: "formats",
+                value: function d() {
+                    var $ = this
+                      , d = this._getFormats(this.metadata) || this._getFormats(this.getDefaultCountryMetadataForRegion()) || [];
+                    return d.map(function(d) {
+                        return new v(d,$)
+                    })
+                }
+            }, {
+                key: "nationalPrefix",
+                value: function() {
+                    return this.metadata[this.v1 ? 3 : this.v2 ? 4 : 5]
+                }
+            }, {
+                key: "_getNationalPrefixFormattingRule",
+                value: function(d) {
+                    return d[this.v1 ? 4 : this.v2 ? 5 : 6]
+                }
+            }, {
+                key: "nationalPrefixFormattingRule",
+                value: function() {
+                    return this._getNationalPrefixFormattingRule(this.metadata) || this._getNationalPrefixFormattingRule(this.getDefaultCountryMetadataForRegion())
+                }
+            }, {
+                key: "_nationalPrefixForParsing",
+                value: function() {
+                    return this.metadata[this.v1 ? 5 : this.v2 ? 6 : 7]
+                }
+            }, {
+                key: "nationalPrefixForParsing",
+                value: function() {
+                    return this._nationalPrefixForParsing() || this.nationalPrefix()
+                }
+            }, {
+                key: "nationalPrefixTransformRule",
+                value: function() {
+                    return this.metadata[this.v1 ? 6 : this.v2 ? 7 : 8]
+                }
+            }, {
+                key: "_getNationalPrefixIsOptionalWhenFormatting",
+                value: function() {
+                    return !!this.metadata[this.v1 ? 7 : this.v2 ? 8 : 9]
+                }
+            }, {
+                key: "nationalPrefixIsOptionalWhenFormattingInNationalFormat",
+                value: function() {
+                    return this._getNationalPrefixIsOptionalWhenFormatting(this.metadata) || this._getNationalPrefixIsOptionalWhenFormatting(this.getDefaultCountryMetadataForRegion())
+                }
+            }, {
+                key: "leadingDigits",
+                value: function() {
+                    return this.metadata[this.v1 ? 8 : this.v2 ? 9 : 10]
+                }
+            }, {
+                key: "types",
+                value: function() {
+                    return this.metadata[this.v1 ? 9 : this.v2 ? 10 : 11]
+                }
+            }, {
+                key: "hasTypes",
+                value: function() {
+                    return (!this.types() || 0 !== this.types().length) && !!this.types()
+                }
+            }, {
+                key: "type",
+                value: function(d) {
+                    if (this.hasTypes() && R(this.types(), d))
+                        return new A(R(this.types(), d),this)
+                }
+            }, {
+                key: "ext",
+                value: function() {
+                    return !this.v1 && !this.v2 && this.metadata[13] || C
+                }
+            }]),
+            t
+        }()
+          , v = function() {
+            function t(d, $) {
+                h(this, t),
+                this._format = d,
+                this.metadata = $
+            }
+            return y(t, [{
+                key: "pattern",
+                value: function() {
+                    return this._format[0]
+                }
+            }, {
+                key: "format",
+                value: function() {
+                    return this._format[1]
+                }
+            }, {
+                key: "leadingDigitsPatterns",
+                value: function() {
+                    return this._format[2] || []
+                }
+            }, {
+                key: "nationalPrefixFormattingRule",
+                value: function() {
+                    return this._format[3] || this.metadata.nationalPrefixFormattingRule()
+                }
+            }, {
+                key: "nationalPrefixIsOptionalWhenFormattingInNationalFormat",
+                value: function() {
+                    return !!this._format[4] || this.metadata.nationalPrefixIsOptionalWhenFormattingInNationalFormat()
+                }
+            }, {
+                key: "nationalPrefixIsMandatoryWhenFormattingInNationalFormat",
+                value: function() {
+                    return this.usesNationalPrefix() && !this.nationalPrefixIsOptionalWhenFormattingInNationalFormat()
+                }
+            }, {
+                key: "usesNationalPrefix",
+                value: function() {
+                    return !(!this.nationalPrefixFormattingRule() || S.test(this.nationalPrefixFormattingRule()))
+                }
+            }, {
+                key: "internationalFormat",
+                value: function() {
+                    return this._format[5] || this.format()
+                }
+            }]),
+            t
+        }()
+          , S = /^\(?\$1\)?$/
+          , A = function() {
+            function t(d, $) {
+                h(this, t),
+                this.type = d,
+                this.metadata = $
+            }
+            return y(t, [{
+                key: "pattern",
+                value: function() {
+                    return this.metadata.v1 ? this.type : this.type[0]
+                }
+            }, {
+                key: "possibleLengths",
+                value: function() {
+                    if (!this.metadata.v1)
+                        return this.type[1] || this.metadata.possibleLengths()
+                }
+            }]),
+            t
+        }();
+        function R(d, $) {
+            switch ($) {
+            case "FIXED_LINE":
+                return d[0];
+            case "MOBILE":
+                return d[1];
+            case "TOLL_FREE":
+                return d[2];
+            case "PREMIUM_RATE":
+                return d[3];
+            case "PERSONAL_NUMBER":
+                return d[4];
+            case "VOICEMAIL":
+                return d[5];
+            case "UAN":
+                return d[6];
+            case "PAGER":
+                return d[7];
+            case "VOIP":
+                return d[8];
+            case "SHARED_COST":
+                return d[9]
+            }
+        }
+        var _ = function _(d) {
+            return "object" === c(d)
+        }
+          , N = function N(d) {
+            return c(d)
+        };
+        function O(d, $) {
+            if (($ = new E($)).hasCountry(d))
+                return $.country(d).countryCallingCode();
+            throw new Error("Unknown country: ".concat(d))
+        }
+        function P(d) {
+            d = d.version;
+            "number" == typeof d ? (this.v1 = 1 === d,
+            this.v2 = 2 === d,
+            this.v3 = 3 === d,
+            this.v4 = 4 === d) : d ? -1 === l(d, g) ? this.v2 = !0 : -1 === l(d, m) ? this.v3 = !0 : this.v4 = !0 : this.v1 = !0
+        }
+        var H = function(d) {
+            return "([".concat(r, "]{1,").concat(d, "})")
+        };
+        function I() {
+            var d = "[  \\t,]*"
+              , $ = "[:\\.．]?[  \\t,-]*"
+              , t = "[  \\t]*";
+            return ";ext=" + H("20") + "|" + (d + "(?:e?xt(?:ensi(?:ó?|ó))?n?|ｅ?ｘｔｎ?|доб|anexo)" + $ + H("20") + "#?") + "|" + (d + "(?:[xｘ#＃~～]|int|ｉｎｔ)" + $ + H("9") + "#?") + "|" + ("[- ]+" + H("6") + "#") + "|" + (t + "(?:,{2}|;)" + $ + H("15") + "#?") + "|" + (t + "(?:,)+" + $ + H("9") + "#?")
+        }
+        var w = "[" + r + "]{" + u + "}"
+          , $ = "[+＋]{0,1}(?:[" + i + "]*[" + r + "]){3,}[" + i + r + "]*" + "(?:" + I() + ")?"
+          , T = new RegExp("^" + w + "$|^" + $ + "$","i");
+        function M(d) {
+            return d.length >= u && T.test(d)
+        }
+        var x = new RegExp("(?:" + I() + ")$","i");
+        var k = {
+            0: "0",
+            1: "1",
+            2: "2",
+            3: "3",
+            4: "4",
+            5: "5",
+            6: "6",
+            7: "7",
+            8: "8",
+            9: "9",
+            "０": "0",
+            "１": "1",
+            "２": "2",
+            "３": "3",
+            "４": "4",
+            "５": "5",
+            "６": "6",
+            "７": "7",
+            "８": "8",
+            "９": "9",
+            "٠": "0",
+            "١": "1",
+            "٢": "2",
+            "٣": "3",
+            "٤": "4",
+            "٥": "5",
+            "٦": "6",
+            "٧": "7",
+            "٨": "8",
+            "٩": "9",
+            "۰": "0",
+            "۱": "1",
+            "۲": "2",
+            "۳": "3",
+            "۴": "4",
+            "۵": "5",
+            "۶": "6",
+            "۷": "7",
+            "۸": "8",
+            "۹": "9"
+        };
+        function F(d) {
+            return k[d]
+        }
+        function L(d) {
+            for (var $, t, e, n = "", r = d.split(""), i = Array.isArray(r), a = 0, r = i ? r : r[Symbol.iterator](); ; ) {
+                if (i) {
+                    if (a >= r.length)
+                        break;
+                    $ = r[a++]
+                } else {
+                    if ((a = r.next()).done)
+                        break;
+                    $ = a.value
+                }
+                n += (e = n,
+                ("+" !== (t = $) ? F(t) : e ? void 0 : "+") || "")
+            }
+            return n
+        }
+        function D(d, $) {
+            for (var t, e = d.slice(), n = $, r = Array.isArray(n), i = 0, n = r ? n : n[Symbol.iterator](); ; ) {
+                if (r) {
+                    if (i >= n.length)
+                        break;
+                    t = n[i++]
+                } else {
+                    if ((i = n.next()).done)
+                        break;
+                    t = i.value
+                }
+                var a = t;
+                d.indexOf(a) < 0 && e.push(a)
+            }
+            return e.sort(function(d, $) {
+                return d - $
             })
         }
-        function N(e) {
-            let t = e;
-            return {
-                update: async function(e, r) {
-                    try {
-                        t = r(),
-                        t = await e()
-                    } catch (i) {
-                        console.error(i)
+        function B(d, $) {
+            return function r(d, $, t) {
+                var e = t.type($);
+                var n = e && e.possibleLengths() || t.possibleLengths();
+                if (!n)
+                    return "IS_POSSIBLE";
+                if ("FIXED_LINE_OR_MOBILE" === $) {
+                    if (!t.type("FIXED_LINE"))
+                        return r(d, "MOBILE", t);
+                    var t = t.type("MOBILE");
+                    t && (n = D(n, t.possibleLengths()))
+                } else if ($ && !e)
+                    return "INVALID_LENGTH";
+                var e = d.length;
+                var d = n[0];
+                if (d === e)
+                    return "IS_POSSIBLE";
+                if (e < d)
+                    return "TOO_SHORT";
+                if (n[n.length - 1] < e)
+                    return "TOO_LONG";
+                return 0 <= n.indexOf(e, 1) ? "IS_POSSIBLE" : "INVALID_LENGTH"
+            }(d, undefined, $)
+        }
+        function G(d, $) {
+            return "IS_POSSIBLE" === B(d, $)
+        }
+        function U(d, $) {
+            return function(d) {
+                if (Array.isArray(d))
+                    return d
+            }(d) || X(d, $) || function() {
+                throw new TypeError("Invalid attempt to destructure non-iterable instance")
+            }()
+        }
+        function X(d, $) {
+            var t = []
+              , e = !0
+              , n = !1
+              , r = undefined;
+            try {
+                for (var i, a = d[Symbol.iterator](); !(e = (i = a.next()).done) && (t.push(i.value),
+                !$ || t.length !== $); e = !0)
+                    ;
+            } catch (o) {
+                n = !0,
+                r = o
+            } finally {
+                try {
+                    e || null == a["return"] || a["return"]()
+                } finally {
+                    if (n)
+                        throw r
+                }
+            }
+            return t
+        }
+        function K(d, $) {
+            return d = d || "",
+            new RegExp("^(?:" + $ + ")$").test(d)
+        }
+        var j = ["MOBILE", "PREMIUM_RATE", "TOLL_FREE", "SHARED_COST", "VOIP", "PERSONAL_NUMBER", "PAGER", "UAN", "VOICEMAIL"];
+        function W(d, $, t) {
+            if ($ = $ || {},
+            d.country) {
+                (t = new E(t)).selectNumberingPlan(d.country, d.countryCallingCode);
+                var e = $.v2 ? d.nationalNumber : d.phone;
+                if (K(e, t.nationalNumberPattern())) {
+                    if (V(e, "FIXED_LINE", t))
+                        return t.type("MOBILE") && "" === t.type("MOBILE").pattern() || !t.type("MOBILE") || V(e, "MOBILE", t) ? "FIXED_LINE_OR_MOBILE" : "FIXED_LINE";
+                    for (var n = 0, r = j; n < r.length; n++) {
+                        var i = r[n];
+                        if (V(e, i, t))
+                            return i
                     }
-                    return t
-                },
-                getRemote: async function(e) {
-                    try {
-                        t = await e()
-                    } catch (r) {
-                        console.error(r)
-                    }
-                    return t
-                },
-                getValue: ()=>t
+                }
             }
         }
-        function A(e, t, r) {
-            const i = N("")
-              , n = {
-                get: function() {
-                    return i.getRemote(e),
-                    i.getValue()
-                },
-                set: function(e) {
-                    const n = e.split(";").map((e=>e.trim())).find((e=>e.startsWith("domain=")))
-                      , o = (null == n ? void 0 : n.split("=")[1]) || "";
-                    if (!(r.filter((e=>new RegExp(`^\\.?${e}$`).test(o))).length > 0)) {
-                        const r = i.getValue();
-                        i.update((()=>t(e)), (()=>function(e, t) {
-                            const r = e.split("; ").reduce(((e,t)=>{
-                                const [r,i] = t.split("=");
-                                return i && (e[r] = i),
-                                e
+        function V(d, $, t) {
+            return ($ = t.type($)) && $.pattern() && (!($.possibleLengths() && $.possibleLengths().indexOf(d.length) < 0) && K(d, $.pattern()))
+        }
+        var Y = /(\$\d)/;
+        function J(d, $, t) {
+            var e = t.useInternationalFormat
+              , n = t.withNationalPrefix
+              , $ = (t.carrierCode,
+            t.metadata,
+            d.replace(new RegExp($.pattern()), e ? $.internationalFormat() : n && $.nationalPrefixFormattingRule() ? $.format().replace(Y, $.nationalPrefixFormattingRule()) : $.format()));
+            return e ? $.replace(new RegExp("[".concat(i, "]+"),"g"), " ").trim() : $
+        }
+        var Z = /^[\d]+(?:[~\u2053\u223C\uFF5E][\d]+)?$/;
+        function z(e) {
+            for (var d = 1; d < arguments.length; d++) {
+                var n = null != arguments[d] ? arguments[d] : {}
+                  , $ = Object.keys(n);
+                ($ = "function" == typeof Object.getOwnPropertySymbols ? $.concat(Object.getOwnPropertySymbols(n).filter(function(d) {
+                    return Object.getOwnPropertyDescriptor(n, d).enumerable
+                })) : $).forEach(function(d) {
+                    var $, t;
+                    $ = e,
+                    d = n[t = d],
+                    t in $ ? Object.defineProperty($, t, {
+                        value: d,
+                        enumerable: !0,
+                        configurable: !0,
+                        writable: !0
+                    }) : $[t] = d
+                })
+            }
+            return e
+        }
+        var Q = {
+            formatExtension: function(d, $, t) {
+                return "".concat(d).concat(t.ext()).concat($)
+            }
+        };
+        function q(d, $, t, e) {
+            if (t = t ? z({}, Q, t) : Q,
+            e = new E(e),
+            d.country && "001" !== d.country) {
+                if (!e.hasCountry(d.country))
+                    throw new Error("Unknown country: ".concat(d.country));
+                e.country(d.country)
+            } else {
+                if (!d.countryCallingCode)
+                    return d.phone || "";
+                e.selectNumberingPlan(d.countryCallingCode)
+            }
+            var n, r = e.countryCallingCode(), i = t.v2 ? d.nationalNumber : d.phone;
+            switch ($) {
+            case "NATIONAL":
+                return i ? $d(n = dd(i, d.carrierCode, "NATIONAL", e, t), d.ext, e, t.formatExtension) : "";
+            case "INTERNATIONAL":
+                return i ? (n = dd(i, null, "INTERNATIONAL", e, t),
+                $d(n = "+".concat(r, " ").concat(n), d.ext, e, t.formatExtension)) : "+".concat(r);
+            case "E.164":
+                return "+".concat(r).concat(i);
+            case "RFC3966":
+                return function(d) {
+                    var $ = d.number
+                      , d = d.ext;
+                    if (!$)
+                        return "";
+                    if ("+" !== $[0])
+                        throw new Error('"formatRFC3966()" expects "number" to be in E.164 format.');
+                    return "tel:".concat($).concat(d ? ";ext=" + d : "")
+                }({
+                    number: "+".concat(r).concat(i),
+                    ext: d.ext
+                });
+            case "IDD":
+                return t.fromCountry ? $d(function(d, $, t, e, n) {
+                    if (O(e, n.metadata) === t) {
+                        $ = dd(d, $, "NATIONAL", n);
+                        return "1" === t ? t + " " + $ : $
+                    }
+                    e = function(d, $, t) {
+                        return (t = new E(t)).selectNumberingPlan(d, $),
+                        Z.test(t.IDDPrefix()) ? t.IDDPrefix() : t.defaultIDDPrefix()
+                    }(e, undefined, n.metadata);
+                    if (e)
+                        return "".concat(e, " ").concat(t, " ").concat(dd(d, null, "INTERNATIONAL", n))
+                }(i, d.carrierCode, r, t.fromCountry, e), d.ext, e, t.formatExtension) : void 0;
+            default:
+                throw new Error('Unknown "format" argument passed to "formatNumber()": "'.concat($, '"'))
+            }
+        }
+        function dd(d, $, t, e, n) {
+            var r = function(d, $) {
+                for (var t, e = d, n = Array.isArray(e), r = 0, e = n ? e : e[Symbol.iterator](); ; ) {
+                    if (n) {
+                        if (r >= e.length)
+                            break;
+                        t = e[r++]
+                    } else {
+                        if ((r = e.next()).done)
+                            break;
+                        t = r.value
+                    }
+                    var i = t;
+                    if (0 < i.leadingDigitsPatterns().length) {
+                        var a = i.leadingDigitsPatterns()[i.leadingDigitsPatterns().length - 1];
+                        if (0 !== $.search(a))
+                            continue
+                    }
+                    if (K($, i.pattern()))
+                        return i
+                }
+            }(e.formats(), d);
+            return r ? J(d, r, {
+                useInternationalFormat: "INTERNATIONAL" === t,
+                withNationalPrefix: !r.nationalPrefixIsOptionalWhenFormattingInNationalFormat() || !n || !1 !== n.nationalPrefix,
+                carrierCode: $,
+                metadata: e
+            }) : d
+        }
+        function $d(d, $, t, e) {
+            return $ ? e(d, $, t) : d
+        }
+        function td(e) {
+            for (var d = 1; d < arguments.length; d++) {
+                var n = null != arguments[d] ? arguments[d] : {}
+                  , $ = Object.keys(n);
+                ($ = "function" == typeof Object.getOwnPropertySymbols ? $.concat(Object.getOwnPropertySymbols(n).filter(function(d) {
+                    return Object.getOwnPropertyDescriptor(n, d).enumerable
+                })) : $).forEach(function(d) {
+                    var $, t;
+                    $ = e,
+                    d = n[t = d],
+                    t in $ ? Object.defineProperty($, t, {
+                        value: d,
+                        enumerable: !0,
+                        configurable: !0,
+                        writable: !0
+                    }) : $[t] = d
+                })
+            }
+            return e
+        }
+        function ed(d, $) {
+            for (var t = 0; t < $.length; t++) {
+                var e = $[t];
+                e.enumerable = e.enumerable || !1,
+                e.configurable = !0,
+                "value"in e && (e.writable = !0),
+                Object.defineProperty(d, e.key, e)
+            }
+        }
+        var nd = !1
+          , rd = function() {
+            function n(d, $, t) {
+                if (!function(d, $) {
+                    if (!(d instanceof $))
+                        throw new TypeError("Cannot call a class as a function")
+                }(this, n),
+                !d)
+                    throw new TypeError("`country` or `countryCallingCode` not passed");
+                if (!$)
+                    throw new TypeError("`nationalNumber` not passed");
+                var e = new E(t);
+                id(d) ? (this.country = d,
+                e.country(d),
+                d = e.countryCallingCode()) : nd && e.isNonGeographicCallingCode(d) && (this.country = "001"),
+                this.countryCallingCode = d,
+                this.nationalNumber = $,
+                this.number = "+" + this.countryCallingCode + this.nationalNumber,
+                this.metadata = t
+            }
+            var d, $, t;
+            return d = n,
+            ($ = [{
+                key: "isPossible",
+                value: function() {
+                    return function(d, $, t) {
+                        if ($ === undefined && ($ = {}),
+                        t = new E(t),
+                        $.v2) {
+                            if (!d.countryCallingCode)
+                                throw new Error("Invalid phone number object passed");
+                            t.selectNumberingPlan(d.countryCallingCode)
+                        } else {
+                            if (!d.phone)
+                                return !1;
+                            if (d.country) {
+                                if (!t.hasCountry(d.country))
+                                    throw new Error("Unknown country: ".concat(d.country));
+                                t.country(d.country)
+                            } else {
+                                if (!d.countryCallingCode)
+                                    throw new Error("Invalid phone number object passed");
+                                t.selectNumberingPlan(d.countryCallingCode)
                             }
-                            ), {})
-                              , i = t.split(";")[0]
-                              , [n,o] = i.split("=");
-                            return r[n] = o,
-                            Object.entries(r).map((([e,t])=>`${e}=${t}`)).join("; ")
-                        }(r, e)))
-                    }
-                },
-                configurable: !1,
-                enumerable: !1
-            };
-            return v(document, "cookie", n),
-            {
-                cache: i,
-                definition: n,
-                initialize: ()=>i.getRemote(e)
-            }
-        }
-        function T(e) {
-            const t = N("")
-              , r = {
-                get: function() {
-                    return t.getRemote(e),
-                    t.getValue()
-                },
-                configurable: !1,
-                enumerable: !1,
-                writeable: !1
-            };
-            return v(window, "origin", r),
-            {
-                cache: t,
-                definition: r,
-                initialize: ()=>t.getRemote(e)
-            }
-        }
-        function B(e) {
-            const t = N("")
-              , r = {
-                get: ()=>(t.getRemote(e),
-                t.getValue()),
-                configurable: !1,
-                enumerable: !1,
-                writeable: !1
-            };
-            return v(document, "referrer", r),
-            {
-                cache: t,
-                definition: r,
-                initialize: ()=>t.getRemote(e)
-            }
-        }
-        function L(e, t, r) {
-            const i = function(e) {
-                const t = new Map
-                  , r = {
-                    initialize: async()=>{
-                        const r = await e.length() || 0;
-                        for (let i = 0; i < r; i++) {
-                            const r = await e.key(i) || ""
-                              , n = await e.getItem(r);
-                            n && t.set(r, n)
                         }
+                        if (t.possibleLengths())
+                            return G(d.phone || d.nationalNumber, t);
+                        if (d.countryCallingCode && t.isNonGeographicCallingCode(d.countryCallingCode))
+                            return !0;
+                        throw new Error('Missing "possibleLengths" in metadata. Perhaps the metadata has been generated before v1.0.18.')
+                    }(this, {
+                        v2: !0
+                    }, this.metadata)
+                }
+            }, {
+                key: "isValid",
+                value: function() {
+                    return $ = {
+                        v2: !0
+                    },
+                    t = (d = this).metadata,
+                    $ = $ || {},
+                    t = new E(t),
+                    !!d.country && (t.selectNumberingPlan(d.country, d.countryCallingCode),
+                    t.hasTypes() ? W(d, $, t.metadata) !== undefined : K($.v2 ? d.nationalNumber : d.phone, t.nationalNumberPattern()));
+                    var d, $, t
+                }
+            }, {
+                key: "isNonGeographic",
+                value: function() {
+                    return new E(this.metadata).isNonGeographicCallingCode(this.countryCallingCode)
+                }
+            }, {
+                key: "isEqual",
+                value: function(d) {
+                    return this.number === d.number && this.ext === d.ext
+                }
+            }, {
+                key: "getType",
+                value: function() {
+                    return W(this, {
+                        v2: !0
+                    }, this.metadata)
+                }
+            }, {
+                key: "format",
+                value: function(d, $) {
+                    return q(this, d, $ ? td({}, $, {
+                        v2: !0
+                    }) : {
+                        v2: !0
+                    }, this.metadata)
+                }
+            }, {
+                key: "formatNational",
+                value: function(d) {
+                    return this.format("NATIONAL", d)
+                }
+            }, {
+                key: "formatInternational",
+                value: function(d) {
+                    return this.format("INTERNATIONAL", d)
+                }
+            }, {
+                key: "getURI",
+                value: function(d) {
+                    return this.format("RFC3966", d)
+                }
+            }]) && ed(d.prototype, $),
+            t && ed(d, t),
+            n
+        }()
+          , id = function id(d) {
+            return /^[A-Z]{2}$/.test(d)
+        }
+          , ad = new RegExp("([" + r + "])");
+        function od(d, $) {
+            var t, e = function(d, $) {
+                if (d && $.numberingPlan.nationalPrefixForParsing()) {
+                    var t = new RegExp("^(?:" + $.numberingPlan.nationalPrefixForParsing() + ")")
+                      , e = t.exec(d);
+                    if (e) {
+                        var n, r, i, a = e.length - 1, o = 0 < a && e[a];
+                        return $.nationalPrefixTransformRule() && o ? (r = d.replace(t, $.nationalPrefixTransformRule()),
+                        1 < a && (n = e[1])) : (a = e[0],
+                        r = d.slice(a.length),
+                        o && (n = e[1])),
+                        o ? (o = d.indexOf(e[1]),
+                        d.slice(0, o) === $.numberingPlan.nationalPrefix() && (i = $.numberingPlan.nationalPrefix())) : i = e[0],
+                        {
+                            nationalNumber: r,
+                            nationalPrefix: i,
+                            carrierCode: n
+                        }
+                    }
+                }
+                return {
+                    nationalNumber: d
+                }
+            }(d, $), n = e.nationalNumber, r = e.carrierCode;
+            if (t = n,
+            K(d, (e = $).nationalNumberPattern()) && !K(t, e.nationalNumberPattern()))
+                return {
+                    nationalNumber: d
+                };
+            if (d.length !== n.length + (r ? r.length : 0) && $.possibleLengths())
+                switch (B(n, $)) {
+                case "TOO_SHORT":
+                case "INVALID_LENGTH":
+                    return {
+                        nationalNumber: d
+                    }
+                }
+            return {
+                nationalNumber: n,
+                carrierCode: r
+            }
+        }
+        function ud(d, $, t, e) {
+            if (!d)
+                return {};
+            if ("+" !== d[0]) {
+                var n = function(d, $, t, e) {
+                    if ($) {
+                        e = new E(e);
+                        e.selectNumberingPlan($, t);
+                        e = new RegExp(e.IDDPrefix());
+                        if (0 === d.search(e)) {
+                            e = (d = d.slice(d.match(e)[0].length)).match(ad);
+                            if (!(e && null != e[1] && 0 < e[1].length && "0" === e[1]))
+                                return d
+                        }
+                    }
+                }(d, $, t, e);
+                if (!n || n === d) {
+                    if ($ || t) {
+                        $ = function(d, $, t, e) {
+                            var n = $ ? O($, e) : t;
+                            if (0 === d.indexOf(n)) {
+                                (e = new E(e)).selectNumberingPlan($, t);
+                                var r = d.slice(n.length)
+                                  , $ = od(r, e).nationalNumber
+                                  , t = od(d, e).nationalNumber;
+                                if (!K(t, e.nationalNumberPattern()) && K($, e.nationalNumberPattern()) || "TOO_LONG" === B(t, e))
+                                    return {
+                                        countryCallingCode: n,
+                                        number: r
+                                    }
+                            }
+                            return {
+                                number: d
+                            }
+                        }(d, $, t, e),
+                        t = $.countryCallingCode,
+                        $ = $.number;
+                        if (t)
+                            return {
+                                countryCallingCode: t,
+                                number: $
+                            }
+                    }
+                    return {
+                        number: d
+                    }
+                }
+                d = "+" + n
+            }
+            if ("0" === d[1])
+                return {};
+            e = new E(e);
+            for (var r = 2; r - 1 <= a && r <= d.length; ) {
+                var i = d.slice(1, r);
+                if (e.hasCallingCode(i))
+                    return e.selectNumberingPlan(i),
+                    {
+                        countryCallingCode: i,
+                        number: d.slice(r)
+                    };
+                r++
+            }
+            return {}
+        }
+        var sd = !1;
+        function ld(d, $, t) {
+            if (sd && t.isNonGeographicCallingCode(d))
+                return "001";
+            d = t.getCountryCodesForCallingCode(d);
+            return d ? 1 === d.length ? d[0] : function(d, $, t) {
+                t = new E(t);
+                for (var e, n = d, r = Array.isArray(n), i = 0, n = r ? n : n[Symbol.iterator](); ; ) {
+                    if (r) {
+                        if (i >= n.length)
+                            break;
+                        e = n[i++]
+                    } else {
+                        if ((i = n.next()).done)
+                            break;
+                        e = i.value
+                    }
+                    var a = e;
+                    if (t.country(a),
+                    t.leadingDigits()) {
+                        if ($ && 0 === $.search(t.leadingDigits()))
+                            return a
+                    } else if (W({
+                        phone: $,
+                        country: a
+                    }, undefined, t.metadata))
+                        return a
+                }
+            }(d, $, t.metadata) : void 0
+        }
+        var cd = 250
+          , hd = new RegExp("[+＋" + r + "]")
+          , fd = new RegExp("[^" + r + "#]+$")
+          , yd = !1;
+        function gd(d, $, t) {
+            if ($ = $ || {},
+            t = new E(t),
+            $.defaultCountry && !t.hasCountry($.defaultCountry)) {
+                if ($.v2)
+                    throw new o("INVALID_COUNTRY");
+                throw new Error("Unknown country: ".concat($.defaultCountry))
+            }
+            var e = function(d, $, t) {
+                if (d && 0 === d.indexOf("tel:"))
+                    return function(d) {
+                        for (var $, t, e, n = (d = d.replace(/^tel:/, "tel=")).split(";"), r = Array.isArray(n), i = 0, n = r ? n : n[Symbol.iterator](); ; ) {
+                            if (r) {
+                                if (i >= n.length)
+                                    break;
+                                e = n[i++]
+                            } else {
+                                if ((i = n.next()).done)
+                                    break;
+                                e = i.value
+                            }
+                            var a = U(e.split("="), 2)
+                              , o = a[0]
+                              , u = a[1];
+                            switch (o) {
+                            case "tel":
+                                $ = u;
+                                break;
+                            case "ext":
+                                t = u;
+                                break;
+                            case "phone-context":
+                                "+" === u[0] && ($ = u + $)
+                            }
+                        }
+                        return M($) ? (d = {
+                            number: $
+                        },
+                        t && (d.ext = t),
+                        d) : {}
+                    }(d);
+                t = function(d, $, t) {
+                    if (d) {
+                        if (!(d.length > cd)) {
+                            if (!1 === $)
+                                return d;
+                            $ = d.search(hd);
+                            return $ < 0 ? void 0 : d.slice($).replace(fd, "")
+                        }
+                        if (t)
+                            throw new o("TOO_LONG")
+                    }
+                }(d, t, $);
+                if (!t || !M(t))
+                    return {};
+                $ = function(d) {
+                    var $ = d.search(x);
+                    if ($ < 0)
+                        return {};
+                    for (var t = d.slice(0, $), e = d.match(x), n = 1; n < e.length; ) {
+                        if (e[n])
+                            return {
+                                number: t,
+                                ext: e[n]
+                            };
+                        n++
+                    }
+                }(t);
+                if ($.ext)
+                    return $;
+                return {
+                    number: t
+                }
+            }(d, $.v2, $.extract)
+              , n = e.number
+              , r = e.ext;
+            if (!n) {
+                if ($.v2)
+                    throw new o("NOT_A_NUMBER");
+                return {}
+            }
+            var i = function(d, $, t, e) {
+                var n, r = ud(L(d), $, t, e.metadata), d = r.countryCallingCode, r = r.number;
+                if (d)
+                    e.selectNumberingPlan(d);
+                else {
+                    if (!r || !$ && !t)
+                        return {};
+                    e.selectNumberingPlan($, t),
+                    $ ? n = $ : yd && e.isNonGeographicCallingCode(t) && (n = "001"),
+                    d = t || O($, e.metadata)
+                }
+                if (!r)
+                    return {
+                        countryCallingCode: d
+                    };
+                t = od(L(r), e),
+                $ = t.nationalNumber,
+                r = t.carrierCode,
+                t = ld(d, $, e);
+                t && ("001" === (n = t) || e.country(n));
+                return {
+                    country: n,
+                    countryCallingCode: d,
+                    nationalNumber: $,
+                    carrierCode: r
+                }
+            }(n, $.defaultCountry, $.defaultCallingCode, t)
+              , d = i.country
+              , e = i.nationalNumber
+              , n = i.countryCallingCode
+              , i = i.carrierCode;
+            if (!t.hasSelectedNumberingPlan()) {
+                if ($.v2)
+                    throw new o("INVALID_COUNTRY");
+                return {}
+            }
+            if (!e || e.length < u) {
+                if ($.v2)
+                    throw new o("TOO_SHORT");
+                return {}
+            }
+            if (e.length > s) {
+                if ($.v2)
+                    throw new o("TOO_LONG");
+                return {}
+            }
+            if ($.v2) {
+                var a = new rd(n,e,t.metadata);
+                return d && (a.country = d),
+                i && (a.carrierCode = i),
+                r && (a.ext = r),
+                a
+            }
+            a = !($.extended ? !t.hasSelectedNumberingPlan() : !d) && K(e, t.nationalNumberPattern());
+            return $.extended ? {
+                country: d,
+                countryCallingCode: n,
+                carrierCode: i,
+                valid: a,
+                possible: !!a || !(!0 !== $.extended || !t.possibleLengths() || !G(e, t)),
+                phone: e,
+                ext: r
+            } : a ? function(d, $, t) {
+                $ = {
+                    country: d,
+                    phone: $
+                };
+                t && ($.ext = t);
+                return $
+            }(d, e, r) : {}
+        }
+        function md(e) {
+            for (var d = 1; d < arguments.length; d++) {
+                var n = null != arguments[d] ? arguments[d] : {}
+                  , $ = Object.keys(n);
+                ($ = "function" == typeof Object.getOwnPropertySymbols ? $.concat(Object.getOwnPropertySymbols(n).filter(function(d) {
+                    return Object.getOwnPropertyDescriptor(n, d).enumerable
+                })) : $).forEach(function(d) {
+                    var $, t;
+                    $ = e,
+                    d = n[t = d],
+                    t in $ ? Object.defineProperty($, t, {
+                        value: d,
+                        enumerable: !0,
+                        configurable: !0,
+                        writable: !0
+                    }) : $[t] = d
+                })
+            }
+            return e
+        }
+        function Cd(d, $, t) {
+            return gd(d, md({}, $, {
+                v2: !0
+            }), t)
+        }
+        function pd(d) {
+            return (pd = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function c(d) {
+                return typeof d
+            }
+            : function c(d) {
+                return d && "function" == typeof Symbol && d.constructor === Symbol && d !== Symbol.prototype ? "symbol" : typeof d
+            }
+            )(d)
+        }
+        function Ed(e) {
+            for (var d = 1; d < arguments.length; d++) {
+                var n = null != arguments[d] ? arguments[d] : {}
+                  , $ = Object.keys(n);
+                ($ = "function" == typeof Object.getOwnPropertySymbols ? $.concat(Object.getOwnPropertySymbols(n).filter(function(d) {
+                    return Object.getOwnPropertyDescriptor(n, d).enumerable
+                })) : $).forEach(function(d) {
+                    var $, t;
+                    $ = e,
+                    d = n[t = d],
+                    t in $ ? Object.defineProperty($, t, {
+                        value: d,
+                        enumerable: !0,
+                        configurable: !0,
+                        writable: !0
+                    }) : $[t] = d
+                })
+            }
+            return e
+        }
+        function bd(d, $) {
+            return function(d) {
+                if (Array.isArray(d))
+                    return d
+            }(d) || vd(d, $) || function() {
+                throw new TypeError("Invalid attempt to destructure non-iterable instance")
+            }()
+        }
+        function vd(d, $) {
+            var t = []
+              , e = !0
+              , n = !1
+              , r = undefined;
+            try {
+                for (var i, a = d[Symbol.iterator](); !(e = (i = a.next()).done) && (t.push(i.value),
+                !$ || t.length !== $); e = !0)
+                    ;
+            } catch (o) {
+                n = !0,
+                r = o
+            } finally {
+                try {
+                    e || null == a["return"] || a["return"]()
+                } finally {
+                    if (n)
+                        throw r
+                }
+            }
+            return t
+        }
+        function Sd(d) {
+            var $, t, e = bd(Array.prototype.slice.call(d), 4), n = e[0], r = e[1], d = e[2], e = e[3];
+            if ("string" != typeof n)
+                throw new TypeError("A text for parsing must be a string.");
+            if (n = n,
+            r && "string" != typeof r) {
+                if (!Ad(r))
+                    throw new Error("Invalid second argument: ".concat(r));
+                t = d ? ($ = r,
+                d) : r
+            } else
+                t = e ? ($ = d,
+                e) : ($ = undefined,
+                d),
+                r && ($ = Ed({
+                    defaultCountry: r
+                }, $));
+            return {
+                text: n,
+                options: $,
+                metadata: t
+            }
+        }
+        var Ad = function Ad(d) {
+            return "object" === pd(d)
+        };
+        function Rd(e) {
+            for (var d = 1; d < arguments.length; d++) {
+                var n = null != arguments[d] ? arguments[d] : {}
+                  , $ = Object.keys(n);
+                ($ = "function" == typeof Object.getOwnPropertySymbols ? $.concat(Object.getOwnPropertySymbols(n).filter(function(d) {
+                    return Object.getOwnPropertyDescriptor(n, d).enumerable
+                })) : $).forEach(function(d) {
+                    var $, t;
+                    $ = e,
+                    d = n[t = d],
+                    t in $ ? Object.defineProperty($, t, {
+                        value: d,
+                        enumerable: !0,
+                        configurable: !0,
+                        writable: !0
+                    }) : $[t] = d
+                })
+            }
+            return e
+        }
+        function _d(d, $, t) {
+            var e;
+            $ && $.defaultCountry && (e = $.defaultCountry,
+            t.countries[e] === undefined) && ($ = Rd({}, $, {
+                defaultCountry: undefined
+            }));
+            try {
+                return Cd(d, $, t)
+            } catch (n) {
+                if (!(n instanceof o))
+                    throw n
+            }
+        }
+        function Nd() {
+            var d = Sd(arguments);
+            return _d(d.text, d.options, d.metadata)
+        }
+        function Od() {
+            return function(d, $) {
+                return ($ = Array.prototype.slice.call($)).push(n),
+                d.apply(this, $)
+            }(Nd, arguments)
+        }
+        var Pd = t("xZxN")
+    },
+    PDX0: function($, d) {
+        !function(d) {
+            $.exports = d
+        }
+        .call(this, {})
+    },
+    bCcq: function(module, exports, __webpack_require__) {
+        !function(global) {
+            var __WEBPACK_AMD_DEFINE_RESULT__;
+            !function() {
+                "use strict";
+                var ERROR = "input is invalid type"
+                  , WINDOW = "object" == typeof window
+                  , root = WINDOW ? window : {};
+                root.JS_SHA256_NO_WINDOW && (WINDOW = !1);
+                var WEB_WORKER = !WINDOW && "object" == typeof self
+                  , NODE_JS = !root.JS_SHA256_NO_NODE_JS && Object({
+                    env: Object({
+                        NODE_ENV: "production",
+                        RUN_REGION: "OTHER",
+                        DEBUG: "CLOSE",
+                        RUNTIME: "DEFAULT",
+                        BLOOM: "DISABLE",
+                        PICKUP: "DISABLE",
+                        COMBINE: "ENABLE",
+                        COMBINE_IDENTIFY: "DISABLE"
+                    })
+                }).versions && Object({
+                    env: Object({
+                        NODE_ENV: "production",
+                        RUN_REGION: "OTHER",
+                        DEBUG: "CLOSE",
+                        RUNTIME: "DEFAULT",
+                        BLOOM: "DISABLE",
+                        PICKUP: "DISABLE",
+                        COMBINE: "ENABLE",
+                        COMBINE_IDENTIFY: "DISABLE"
+                    })
+                }).versions.node;
+                NODE_JS ? root = global : WEB_WORKER && (root = self);
+                var COMMON_JS = !root.JS_SHA256_NO_COMMON_JS && "object" == typeof module && module.exports
+                  , AMD = __webpack_require__("PDX0")
+                  , ARRAY_BUFFER = !root.JS_SHA256_NO_ARRAY_BUFFER && "undefined" != typeof ArrayBuffer
+                  , HEX_CHARS = "0123456789abcdef".split("")
+                  , EXTRA = [-2147483648, 8388608, 32768, 128]
+                  , SHIFT = [24, 16, 8, 0]
+                  , K = [1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]
+                  , OUTPUT_TYPES = ["hex", "array", "digest", "arrayBuffer"]
+                  , blocks = [];
+                !root.JS_SHA256_NO_NODE_JS && Array.isArray || (Array.isArray = function(d) {
+                    return "[object Array]" === Object.prototype.toString.call(d)
+                }
+                ),
+                !ARRAY_BUFFER || !root.JS_SHA256_NO_ARRAY_BUFFER_IS_VIEW && ArrayBuffer.isView || (ArrayBuffer.isView = function(d) {
+                    return "object" == typeof d && d.buffer && d.buffer.constructor === ArrayBuffer
+                }
+                );
+                var createOutputMethod = function($, t) {
+                    return function(d) {
+                        return new Sha256(t,!0).update(d)[$]()
+                    }
+                }
+                  , createMethod = function(d) {
+                    var $ = createOutputMethod("hex", d);
+                    ($ = NODE_JS ? nodeWrap($, d) : $).create = function() {
+                        return new Sha256(d)
                     }
                     ,
-                    getItem: e=>t.get(e) || null,
-                    setItem(r, i) {
-                        e.setItem(r, i),
-                        t.set(r, i)
-                    },
-                    removeItem(r) {
-                        e.removeItem(r),
-                        t.delete(r)
-                    },
-                    clear() {
-                        e.clear(),
-                        t.clear()
-                    },
-                    get length() {
-                        return t.size
-                    },
-                    key(e) {
-                        const r = [...t.keys()]
-                          , [i] = r.filter(((t,r)=>r === e));
-                        return i || null
+                    $.update = function(d) {
+                        return $.create().update(d)
                     }
-                };
-                return r
-            }(r)
-              , n = {
-                get: ()=>i,
-                configurable: !1,
-                enumerable: !1,
-                writeable: !1
-            };
-            return v(e, t, n),
-            {
-                definition: n,
-                initialize: async()=>{
-                    await i.initialize()
+                    ;
+                    for (var t = 0; t < OUTPUT_TYPES.length; ++t) {
+                        var e = OUTPUT_TYPES[t];
+                        $[e] = createOutputMethod(e, d)
+                    }
+                    return $
                 }
-            }
-        }
-        function C(e) {
-            return L(window, "localStorage", e.localStorage)
-        }
-        function M(e) {
-            return L(window, "sessionStorage", e.sessionStorage)
-        }
-        class P extends Error {
-            constructor(...e) {
-                super(...e),
-                this.message = "Invalid Extension Point"
-            }
-        }
-        const I = function() {
-            let e = {
-                call: ()=>{}
-                ,
-                replace: ()=>{}
-                ,
-                expose: ()=>{}
-                ,
-                callable: ()=>{}
-                ,
-                terminate: ()=>{}
-            }
-              , t = "unknown";
-            try {
-                const r = f();
-                t = r ? "worker" : "iframe";
-                const i = r ? self : function({targetOrigin: e="*"}={}) {
-                    if ("undefined" == typeof self || null == self.parent)
-                        throw new Error("This does not appear to be a child iframe, because there is no parent window.");
-                    const {parent: t} = self
-                      , r = ()=>t.postMessage("remote-ui::ready", e);
-                    "complete" === document.readyState ? r() : document.addEventListener("readystatechange", (()=>{
-                        "complete" === document.readyState && r()
-                    }
-                    ));
-                    const i = new WeakMap;
-                    return {
-                        postMessage(r, i) {
-                            t.postMessage(r, e, i)
-                        },
-                        addEventListener(e, r) {
-                            const n = e=>{
-                                e.source === t && r(e)
-                            }
-                            ;
-                            i.set(r, n),
-                            self.addEventListener(e, n)
-                        },
-                        removeEventListener(e, t) {
-                            const r = i.get(t);
-                            null != r && (i.delete(t),
-                            self.removeEventListener(e, r))
-                        }
-                    }
-                }();
-                e = function(e, {uuid: t=s, createEncoder: r=a, callable: i}={}) {
-                    let o = !1
-                      , c = e;
-                    const l = new Map
-                      , u = new Map
-                      , d = function(e, t) {
-                        let r;
-                        if (null == t) {
-                            if ("function" != typeof Proxy)
-                                throw new Error("You must pass an array of callable methods in environments without Proxies.");
-                            const t = new Map;
-                            r = new Proxy({},{
-                                get(r, i) {
-                                    if (t.has(i))
-                                        return t.get(i);
-                                    const n = e(i);
-                                    return t.set(i, n),
-                                    n
-                                }
-                            })
-                        } else {
-                            r = {};
-                            for (const i of t)
-                                Object.defineProperty(r, i, {
-                                    value: e(i),
-                                    writable: !1,
-                                    configurable: !0,
-                                    enumerable: !0
-                                })
-                        }
-                        return r
-                    }(p, i)
-                      , b = r({
-                        uuid: t,
-                        release(e) {
-                            f(3, [e])
-                        },
-                        call(e, r, i) {
-                            const n = t()
-                              , o = w(n, i)
-                              , [a,s] = b.encode(r);
-                            return f(5, [n, e, a], s),
-                            o
-                        }
-                    });
-                    return c.addEventListener("message", m),
-                    {
-                        call: d,
-                        replace(e) {
-                            const t = c;
-                            c = e,
-                            t.removeEventListener("message", m),
-                            e.addEventListener("message", m)
-                        },
-                        expose(e) {
-                            for (const t of Object.keys(e)) {
-                                const r = e[t];
-                                "function" == typeof r ? l.set(t, r) : l.delete(t)
-                            }
-                        },
-                        callable(...e) {
-                            if (null != i)
-                                for (const t of e)
-                                    Object.defineProperty(d, t, {
-                                        value: p(t),
-                                        writable: !1,
-                                        configurable: !0,
-                                        enumerable: !0
-                                    })
-                        },
-                        terminate() {
-                            f(2, void 0),
-                            h(),
-                            c.terminate && c.terminate()
-                        }
+                  , nodeWrap = function(method, is224) {
+                    var crypto = eval("require('crypto')")
+                      , Buffer = eval("require('buffer').Buffer")
+                      , algorithm = is224 ? "sha224" : "sha256"
+                      , nodeMethod = function(d) {
+                        if ("string" == typeof d)
+                            return crypto.createHash(algorithm).update(d, "utf8").digest("hex");
+                        if (null === d || d === undefined)
+                            throw new Error(ERROR);
+                        return d.constructor === ArrayBuffer && (d = new Uint8Array(d)),
+                        Array.isArray(d) || ArrayBuffer.isView(d) || d.constructor === Buffer ? crypto.createHash(algorithm).update(new Buffer(d)).digest("hex") : method(d)
                     };
-                    function f(e, t, r) {
-                        o || c.postMessage(t ? [e, t] : [e], r)
-                    }
-                    async function m(e) {
-                        const {data: t} = e;
-                        if (null != t && Array.isArray(t))
-                            switch (t[0]) {
-                            case 2:
-                                h();
-                                break;
-                            case 0:
-                                {
-                                    const e = new n
-                                      , [i,o,a] = t[1]
-                                      , s = l.get(o);
-                                    try {
-                                        if (null == s)
-                                            throw new Error(`No '${o}' method is exposed on this endpoint`);
-                                        const [t,r] = b.encode(await s(...b.decode(a, [e])));
-                                        f(1, [i, void 0, t], r)
-                                    } catch (r) {
-                                        const {name: e, message: t, stack: n} = r;
-                                        throw f(1, [i, {
-                                            name: e,
-                                            message: t,
-                                            stack: n
-                                        }]),
-                                        r
-                                    } finally {
-                                        e.release()
-                                    }
-                                    break
-                                }
-                            case 1:
-                                {
-                                    const [e] = t[1];
-                                    u.get(e)(...t[1]),
-                                    u.delete(e);
-                                    break
-                                }
-                            case 3:
-                                {
-                                    const [e] = t[1];
-                                    b.release(e);
-                                    break
-                                }
-                            case 6:
-                                {
-                                    const [e] = t[1];
-                                    u.get(e)(...t[1]),
-                                    u.delete(e);
-                                    break
-                                }
-                            case 5:
-                                {
-                                    const [e,i,n] = t[1];
-                                    try {
-                                        const t = await b.call(i, n)
-                                          , [r,o] = b.encode(t);
-                                        f(6, [e, void 0, r], o)
-                                    } catch (r) {
-                                        const {name: t, message: i, stack: n} = r;
-                                        throw f(6, [e, {
-                                            name: t,
-                                            message: i,
-                                            stack: n
-                                        }]),
-                                        r
-                                    }
-                                    break
-                                }
-                            }
-                    }
-                    function p(e) {
-                        return (...r)=>{
-                            if (o)
-                                return Promise.reject(new Error("You attempted to call a function on a terminated web worker."));
-                            if ("string" != typeof e && "number" != typeof e)
-                                return Promise.reject(new Error(`Can’t call a symbol method on a remote endpoint: ${e.toString()}`));
-                            const i = t()
-                              , n = w(i)
-                              , [a,s] = b.encode(r);
-                            return f(0, [i, e, a], s),
-                            n
-                        }
-                    }
-                    function w(e, t) {
-                        return new Promise(((r,i)=>{
-                            u.set(e, ((e,n,o)=>{
-                                if (null == n)
-                                    r(o && b.decode(o, t));
-                                else {
-                                    const e = new Error;
-                                    Object.assign(e, n),
-                                    i(e)
-                                }
-                            }
-                            ))
-                        }
-                        ))
-                    }
-                    function h() {
-                        var e;
-                        o = !0,
-                        l.clear(),
-                        u.clear(),
-                        null === (e = b.terminate) || void 0 === e || e.call(b),
-                        c.removeEventListener("message", m)
-                    }
-                }(i, {
-                    callable: ["webPixelApi", "internalApi"]
-                }),
-                e.expose({
-                    initialize: function(t) {
-                        return new Promise(((r,i)=>{
-                            (async()=>{
-                                try {
-                                    const [n,o] = await Promise.all([e.call.webPixelApi(), e.call.internalApi()]);
-                                    try {
-                                        const e = f();
-                                        if (e && (n.browser.sendBeacon = b),
-                                        E(e),
-                                        !e) {
-                                            const e = await o.cookieRestrictedDomains();
-                                            await function(e, t, r) {
-                                                const i = [A(e.cookie.get, e.cookie.set, r).initialize(), T(t.self.origin.get).initialize(), B(t.document.referrer.get).initialize(), C(e).initialize(), M(e).initialize()];
-                                                return Promise.allSettled ? Promise.allSettled(i) : Promise.all(i)
-                                            }(n.browser, o, e),
-                                            self.document.title = t
-                                        }
-                                        Object.defineProperty(self, "webPixelsManager", {
-                                            value: {
-                                                createShopifyExtend: ()=>({
-                                                    extend: (e,t)=>{
-                                                        if ("WebPixel::Render" !== e)
-                                                            throw new P;
-                                                        try {
-                                                            t.call(n, n),
-                                                            r({
-                                                                status: "success",
-                                                                hashVersion: d,
-                                                                sandboxUrl: self.location.href || "unknown"
-                                                            })
-                                                        } catch (i) {
-                                                            r({
-                                                                status: "error",
-                                                                error: i,
-                                                                errorLocation: "extend",
-                                                                hashVersion: d,
-                                                                sandboxUrl: self.location.href || "unknown"
-                                                            })
-                                                        }
-                                                    }
-                                                })
-                                            },
-                                            enumerable: !0,
-                                            writable: !1
-                                        });
-                                        try {
-                                            self.initWebPixel()
-                                        } catch (i) {
-                                            r({
-                                                status: "error",
-                                                error: i,
-                                                errorLocation: "initWebPixel",
-                                                hashVersion: d,
-                                                sandboxUrl: self.location.href || "unknown"
-                                            })
-                                        }
-                                    } catch (i) {
-                                        r({
-                                            status: "error",
-                                            error: i,
-                                            errorLocation: "initialize/retrievedApi",
-                                            hashVersion: d,
-                                            sandboxUrl: self.location.href || "unknown"
-                                        })
-                                    }
-                                } catch (i) {
-                                    r({
-                                        status: "error",
-                                        error: i,
-                                        errorLocation: "initialize",
-                                        hashVersion: d,
-                                        sandboxUrl: self.location.href || "unknown"
-                                    })
-                                }
-                            }
-                            )()
-                        }
-                        ))
-                    }
-                })
-            } catch (r) {
-                return ((e,t)=>{
-                    try {
-                        var r, i, n;
-                        if (null != t && null !== (r = t.options) && void 0 !== r && r.sampleRate && !function(e) {
-                            if (e <= 0 || e > 100)
-                                throw new Error("Invalid sampling percent");
-                            return 100 * Math.random() <= e
-                        }(t.options.sampleRate))
-                            return;
-                        const s = {
-                            severity: "error",
-                            context: "",
-                            unhandled: !0,
-                            library: "sandbox",
-                            ...t
-                        }
-                          , c = function(t) {
-                            try {
-                                return new m(t).getResult()
-                            } catch (e) {
-                                return {
-                                    ua: "",
-                                    browser: {
-                                        name: "",
-                                        version: "",
-                                        major: ""
-                                    },
-                                    engine: {
-                                        name: "",
-                                        version: ""
-                                    },
-                                    os: {
-                                        name: "",
-                                        version: ""
-                                    },
-                                    device: {
-                                        model: "",
-                                        type: "",
-                                        vendor: ""
-                                    },
-                                    cpu: {
-                                        architecture: ""
-                                    }
-                                }
-                            }
-                        }(s.userAgent || (null === (i = self.navigator) || void 0 === i ? void 0 : i.userAgent));
-                        let b = {
-                            errorClass: null == e ? void 0 : e.name,
-                            message: null == e ? void 0 : e.message,
-                            stacktrace: [],
-                            type: "browserjs"
-                        };
-                        try {
-                            b = function(e) {
-                                if (t = e,
-                                !Boolean(t) || !(Boolean(t.stack) || Boolean(t.stacktrace) || Boolean(t["opera#sourceloc"])) || "string" != typeof (t.stack || t.stacktrace || t["opera#sourceloc"]) || t.stack === `${t.name}: ${t.message}`)
-                                    throw new Error("Error incompatible with error-stack-parser");
-                                var t;
-                                const r = p.parse(e).reduce(((e,t)=>{
-                                    const r = function(e) {
-                                        const t = {
-                                            file: e.fileName,
-                                            method: (r = e.functionName,
-                                            /^global code$/i.test(r || "") ? "global code" : r),
-                                            lineNumber: e.lineNumber,
-                                            columnNumber: e.columnNumber
-                                        };
-                                        var r;
-                                        return t.lineNumber && t.lineNumber > -1 && !t.file && !t.method && (t.file = "global code"),
-                                        t
-                                    }(t);
-                                    try {
-                                        return "{}" === JSON.stringify(r) ? e : e.concat(r)
-                                    } catch (i) {
-                                        return e
-                                    }
-                                }
-                                ), []);
-                                return {
-                                    errorClass: null == e ? void 0 : e.name,
-                                    message: null == e ? void 0 : e.message,
-                                    stacktrace: r,
-                                    type: "browserjs"
-                                }
-                            }(e)
-                        } catch (o) {
-                            try {
-                                b = function(e, t) {
-                                    let r = "";
-                                    const i = {
-                                        lineNumber: "1",
-                                        columnNumber: "1",
-                                        method: t.context,
-                                        file: "https://cdn.shopify.com/s596341d0w7f760444pf8dd6477mf2838468m.js"
-                                    };
-                                    if (e.stackTrace || e.stack || e.description) {
-                                        r = e.stack.split("\n")[0];
-                                        const t = e.stack.match(/([0-9]+):([0-9]+)/);
-                                        if (t && t.length > 2 && (i.lineNumber = t[1],
-                                        i.columnNumber = t[2],
-                                        parseInt(i.lineNumber, 10) > 1e5))
-                                            throw new h
-                                    }
-                                    return {
-                                        errorClass: (null == e ? void 0 : e.name) || r,
-                                        message: (null == e ? void 0 : e.message) || r,
-                                        stacktrace: [i],
-                                        type: "browserjs"
-                                    }
-                                }(e, s)
-                            } catch (a) {
-                                if (a instanceof h)
-                                    return
-                            }
-                        }
-                        const f = g[l];
-                        if (!f)
-                            return;
-                        fetch(f, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Bugsnag-Api-Key": "bcbc9f6762da195561967577c2d74ff8",
-                                "Bugsnag-Payload-Version": "5"
-                            },
-                            body: JSON.stringify({
-                                payloadVersion: 5,
-                                notifier: {
-                                    name: "web-pixel-manager",
-                                    version: u,
-                                    url: "-"
-                                },
-                                events: [{
-                                    exceptions: [b],
-                                    context: s.context,
-                                    severity: s.severity,
-                                    unhandled: s.unhandled,
-                                    app: {
-                                        version: u
-                                    },
-                                    device: {
-                                        manufacturer: c.device.vendor,
-                                        model: c.device.model,
-                                        osName: c.os.name,
-                                        osVersion: c.os.version,
-                                        browserName: c.browser.name,
-                                        browserVersion: c.browser.version
-                                    },
-                                    metaData: {
-                                        app: {
-                                            library: s.library,
-                                            browserTarget: "modern",
-                                            env: l,
-                                            hashVersion: d,
-                                            hashVersionSandbox: s.hashVersionSandbox || "N/A",
-                                            sandboxUrl: s.sandboxUrl || "N/A"
-                                        },
-                                        device: {
-                                            userAgent: s.userAgent || (null === (n = self.navigator) || void 0 === n ? void 0 : n.userAgent),
-                                            renderingEngineName: c.engine.name,
-                                            renderingEngineVersion: c.engine.version
-                                        },
-                                        request: {
-                                            shopId: s.shopId,
-                                            shopUrl: self.location.href,
-                                            pixelId: s.pixelId,
-                                            pixelType: s.pixelType,
-                                            runtimeContext: s.runtimeContext
-                                        },
-                                        "Additional Notes": {
-                                            initConfig: JSON.stringify(s.initConfig),
-                                            notes: s.notes
-                                        }
-                                    }
-                                }]
-                            })
-                        }).catch((()=>{}
-                        ))
-                    } catch (s) {}
+                    return nodeMethod
                 }
-                )(r, {
-                    context: `refactor/createSandbox/${t}`
-                }),
-                {
-                    endpoint: e
+                  , createHmacOutputMethod = function(t, e) {
+                    return function(d, $) {
+                        return new HmacSha256(d,e,!0).update($)[t]()
+                    }
                 }
-            }
-            return {
-                endpoint: e
-            }
-        }();
-        self.webPixelsManagerSandbox = I
+                  , createHmacMethod = function($) {
+                    var t = createHmacOutputMethod("hex", $);
+                    t.create = function(d) {
+                        return new HmacSha256(d,$)
+                    }
+                    ,
+                    t.update = function(d, $) {
+                        return t.create(d).update($)
+                    }
+                    ;
+                    for (var d = 0; d < OUTPUT_TYPES.length; ++d) {
+                        var e = OUTPUT_TYPES[d];
+                        t[e] = createHmacOutputMethod(e, $)
+                    }
+                    return t
+                };
+                function Sha256(d, $) {
+                    $ ? (blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] = blocks[4] = blocks[5] = blocks[6] = blocks[7] = blocks[8] = blocks[9] = blocks[10] = blocks[11] = blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0,
+                    this.blocks = blocks) : this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    d ? (this.h0 = 3238371032,
+                    this.h1 = 914150663,
+                    this.h2 = 812702999,
+                    this.h3 = 4144912697,
+                    this.h4 = 4290775857,
+                    this.h5 = 1750603025,
+                    this.h6 = 1694076839,
+                    this.h7 = 3204075428) : (this.h0 = 1779033703,
+                    this.h1 = 3144134277,
+                    this.h2 = 1013904242,
+                    this.h3 = 2773480762,
+                    this.h4 = 1359893119,
+                    this.h5 = 2600822924,
+                    this.h6 = 528734635,
+                    this.h7 = 1541459225),
+                    this.block = this.start = this.bytes = this.hBytes = 0,
+                    this.finalized = this.hashed = !1,
+                    this.first = !0,
+                    this.is224 = d
+                }
+                function HmacSha256(d, $, t) {
+                    var e = typeof d;
+                    if ("string" == e) {
+                        for (var n, r = [], i = d.length, a = 0, o = 0; o < i; ++o)
+                            (n = d.charCodeAt(o)) < 128 ? r[a++] = n : (n < 2048 ? r[a++] = 192 | n >> 6 : (n < 55296 || 57344 <= n ? r[a++] = 224 | n >> 12 : (n = 65536 + ((1023 & n) << 10 | 1023 & d.charCodeAt(++o)),
+                            r[a++] = 240 | n >> 18,
+                            r[a++] = 128 | n >> 12 & 63),
+                            r[a++] = 128 | n >> 6 & 63),
+                            r[a++] = 128 | 63 & n);
+                        d = r
+                    } else {
+                        if ("object" != e)
+                            throw new Error(ERROR);
+                        if (null === d)
+                            throw new Error(ERROR);
+                        if (ARRAY_BUFFER && d.constructor === ArrayBuffer)
+                            d = new Uint8Array(d);
+                        else if (!(Array.isArray(d) || ARRAY_BUFFER && ArrayBuffer.isView(d)))
+                            throw new Error(ERROR)
+                    }
+                    64 < d.length && (d = new Sha256($,!0).update(d).array());
+                    var u = []
+                      , s = [];
+                    for (o = 0; o < 64; ++o) {
+                        var l = d[o] || 0;
+                        u[o] = 92 ^ l,
+                        s[o] = 54 ^ l
+                    }
+                    Sha256.call(this, $, t),
+                    this.update(s),
+                    this.oKeyPad = u,
+                    this.inner = !0,
+                    this.sharedMemory = t
+                }
+                Sha256.prototype.update = function(d) {
+                    if (!this.finalized) {
+                        var $, t = typeof d;
+                        if ("string" != t) {
+                            if ("object" != t)
+                                throw new Error(ERROR);
+                            if (null === d)
+                                throw new Error(ERROR);
+                            if (ARRAY_BUFFER && d.constructor === ArrayBuffer)
+                                d = new Uint8Array(d);
+                            else if (!(Array.isArray(d) || ARRAY_BUFFER && ArrayBuffer.isView(d)))
+                                throw new Error(ERROR);
+                            $ = !0
+                        }
+                        for (var e, n, r = 0, i = d.length, a = this.blocks; r < i; ) {
+                            if (this.hashed && (this.hashed = !1,
+                            a[0] = this.block,
+                            a[16] = a[1] = a[2] = a[3] = a[4] = a[5] = a[6] = a[7] = a[8] = a[9] = a[10] = a[11] = a[12] = a[13] = a[14] = a[15] = 0),
+                            $)
+                                for (n = this.start; r < i && n < 64; ++r)
+                                    a[n >> 2] |= d[r] << SHIFT[3 & n++];
+                            else
+                                for (n = this.start; r < i && n < 64; ++r)
+                                    (e = d.charCodeAt(r)) < 128 ? a[n >> 2] |= e << SHIFT[3 & n++] : (e < 2048 ? a[n >> 2] |= (192 | e >> 6) << SHIFT[3 & n++] : (e < 55296 || 57344 <= e ? a[n >> 2] |= (224 | e >> 12) << SHIFT[3 & n++] : (e = 65536 + ((1023 & e) << 10 | 1023 & d.charCodeAt(++r)),
+                                    a[n >> 2] |= (240 | e >> 18) << SHIFT[3 & n++],
+                                    a[n >> 2] |= (128 | e >> 12 & 63) << SHIFT[3 & n++]),
+                                    a[n >> 2] |= (128 | e >> 6 & 63) << SHIFT[3 & n++]),
+                                    a[n >> 2] |= (128 | 63 & e) << SHIFT[3 & n++]);
+                            this.lastByteIndex = n,
+                            this.bytes += n - this.start,
+                            64 <= n ? (this.block = a[16],
+                            this.start = n - 64,
+                            this.hash(),
+                            this.hashed = !0) : this.start = n
+                        }
+                        return 4294967295 < this.bytes && (this.hBytes += this.bytes / 4294967296 << 0,
+                        this.bytes = this.bytes % 4294967296),
+                        this
+                    }
+                }
+                ,
+                Sha256.prototype.finalize = function() {
+                    var d, $;
+                    this.finalized || (this.finalized = !0,
+                    d = this.blocks,
+                    $ = this.lastByteIndex,
+                    d[16] = this.block,
+                    d[$ >> 2] |= EXTRA[3 & $],
+                    this.block = d[16],
+                    56 <= $ && (this.hashed || this.hash(),
+                    d[0] = this.block,
+                    d[16] = d[1] = d[2] = d[3] = d[4] = d[5] = d[6] = d[7] = d[8] = d[9] = d[10] = d[11] = d[12] = d[13] = d[14] = d[15] = 0),
+                    d[14] = this.hBytes << 3 | this.bytes >>> 29,
+                    d[15] = this.bytes << 3,
+                    this.hash())
+                }
+                ,
+                Sha256.prototype.hash = function() {
+                    for (var d, $, t, e, n, r, i = this.h0, a = this.h1, o = this.h2, u = this.h3, s = this.h4, l = this.h5, c = this.h6, h = this.h7, f = this.blocks, y = 16; y < 64; ++y)
+                        d = (($ = f[y - 15]) >>> 7 | $ << 25) ^ ($ >>> 18 | $ << 14) ^ $ >>> 3,
+                        $ = f[y - 2],
+                        f[y] = f[y - 16] + d + f[y - 7] + (($ >>> 17 | $ << 15) ^ ($ >>> 19 | $ << 13) ^ $ >>> 10) << 0;
+                    for (r = a & o,
+                    y = 0; y < 64; y += 4)
+                        this.first ? (u = this.is224 ? (t = 300032,
+                        h = ($ = f[0] - 1413257819) - 150054599 << 0,
+                        $ + 24177077 << 0) : (t = 704751109,
+                        h = ($ = f[0] - 210244248) - 1521486534 << 0,
+                        $ + 143694565 << 0),
+                        this.first = !1) : (h = u + ($ = h + ((s >>> 6 | s << 26) ^ (s >>> 11 | s << 21) ^ (s >>> 25 | s << 7)) + (s & l ^ ~s & c) + K[y] + f[y]) << 0,
+                        u = $ + ((d = (i >>> 2 | i << 30) ^ (i >>> 13 | i << 19) ^ (i >>> 22 | i << 10)) + ((t = i & a) ^ i & o ^ r)) << 0),
+                        c = o + ($ = c + ((h >>> 6 | h << 26) ^ (h >>> 11 | h << 21) ^ (h >>> 25 | h << 7)) + (h & s ^ ~h & l) + K[y + 1] + f[y + 1]) << 0,
+                        o = $ + ((d = (u >>> 2 | u << 30) ^ (u >>> 13 | u << 19) ^ (u >>> 22 | u << 10)) + ((e = u & i) ^ u & a ^ t)) << 0,
+                        l = a + ($ = l + ((c >>> 6 | c << 26) ^ (c >>> 11 | c << 21) ^ (c >>> 25 | c << 7)) + (c & h ^ ~c & s) + K[y + 2] + f[y + 2]) << 0,
+                        a = $ + ((d = (o >>> 2 | o << 30) ^ (o >>> 13 | o << 19) ^ (o >>> 22 | o << 10)) + ((n = o & u) ^ o & i ^ e)) << 0,
+                        s = i + ($ = s + ((l >>> 6 | l << 26) ^ (l >>> 11 | l << 21) ^ (l >>> 25 | l << 7)) + (l & c ^ ~l & h) + K[y + 3] + f[y + 3]) << 0,
+                        i = $ + ((d = (a >>> 2 | a << 30) ^ (a >>> 13 | a << 19) ^ (a >>> 22 | a << 10)) + ((r = a & o) ^ a & u ^ n)) << 0;
+                    this.h0 = this.h0 + i << 0,
+                    this.h1 = this.h1 + a << 0,
+                    this.h2 = this.h2 + o << 0,
+                    this.h3 = this.h3 + u << 0,
+                    this.h4 = this.h4 + s << 0,
+                    this.h5 = this.h5 + l << 0,
+                    this.h6 = this.h6 + c << 0,
+                    this.h7 = this.h7 + h << 0
+                }
+                ,
+                Sha256.prototype.hex = function() {
+                    this.finalize();
+                    var d = this.h0
+                      , $ = this.h1
+                      , t = this.h2
+                      , e = this.h3
+                      , n = this.h4
+                      , r = this.h5
+                      , i = this.h6
+                      , a = this.h7
+                      , i = HEX_CHARS[d >> 28 & 15] + HEX_CHARS[d >> 24 & 15] + HEX_CHARS[d >> 20 & 15] + HEX_CHARS[d >> 16 & 15] + HEX_CHARS[d >> 12 & 15] + HEX_CHARS[d >> 8 & 15] + HEX_CHARS[d >> 4 & 15] + HEX_CHARS[15 & d] + HEX_CHARS[$ >> 28 & 15] + HEX_CHARS[$ >> 24 & 15] + HEX_CHARS[$ >> 20 & 15] + HEX_CHARS[$ >> 16 & 15] + HEX_CHARS[$ >> 12 & 15] + HEX_CHARS[$ >> 8 & 15] + HEX_CHARS[$ >> 4 & 15] + HEX_CHARS[15 & $] + HEX_CHARS[t >> 28 & 15] + HEX_CHARS[t >> 24 & 15] + HEX_CHARS[t >> 20 & 15] + HEX_CHARS[t >> 16 & 15] + HEX_CHARS[t >> 12 & 15] + HEX_CHARS[t >> 8 & 15] + HEX_CHARS[t >> 4 & 15] + HEX_CHARS[15 & t] + HEX_CHARS[e >> 28 & 15] + HEX_CHARS[e >> 24 & 15] + HEX_CHARS[e >> 20 & 15] + HEX_CHARS[e >> 16 & 15] + HEX_CHARS[e >> 12 & 15] + HEX_CHARS[e >> 8 & 15] + HEX_CHARS[e >> 4 & 15] + HEX_CHARS[15 & e] + HEX_CHARS[n >> 28 & 15] + HEX_CHARS[n >> 24 & 15] + HEX_CHARS[n >> 20 & 15] + HEX_CHARS[n >> 16 & 15] + HEX_CHARS[n >> 12 & 15] + HEX_CHARS[n >> 8 & 15] + HEX_CHARS[n >> 4 & 15] + HEX_CHARS[15 & n] + HEX_CHARS[r >> 28 & 15] + HEX_CHARS[r >> 24 & 15] + HEX_CHARS[r >> 20 & 15] + HEX_CHARS[r >> 16 & 15] + HEX_CHARS[r >> 12 & 15] + HEX_CHARS[r >> 8 & 15] + HEX_CHARS[r >> 4 & 15] + HEX_CHARS[15 & r] + HEX_CHARS[i >> 28 & 15] + HEX_CHARS[i >> 24 & 15] + HEX_CHARS[i >> 20 & 15] + HEX_CHARS[i >> 16 & 15] + HEX_CHARS[i >> 12 & 15] + HEX_CHARS[i >> 8 & 15] + HEX_CHARS[i >> 4 & 15] + HEX_CHARS[15 & i];
+                    return this.is224 || (i += HEX_CHARS[a >> 28 & 15] + HEX_CHARS[a >> 24 & 15] + HEX_CHARS[a >> 20 & 15] + HEX_CHARS[a >> 16 & 15] + HEX_CHARS[a >> 12 & 15] + HEX_CHARS[a >> 8 & 15] + HEX_CHARS[a >> 4 & 15] + HEX_CHARS[15 & a]),
+                    i
+                }
+                ,
+                Sha256.prototype.toString = Sha256.prototype.hex,
+                Sha256.prototype.digest = function() {
+                    this.finalize();
+                    var d = this.h0
+                      , $ = this.h1
+                      , t = this.h2
+                      , e = this.h3
+                      , n = this.h4
+                      , r = this.h5
+                      , i = this.h6
+                      , a = this.h7
+                      , i = [d >> 24 & 255, d >> 16 & 255, d >> 8 & 255, 255 & d, $ >> 24 & 255, $ >> 16 & 255, $ >> 8 & 255, 255 & $, t >> 24 & 255, t >> 16 & 255, t >> 8 & 255, 255 & t, e >> 24 & 255, e >> 16 & 255, e >> 8 & 255, 255 & e, n >> 24 & 255, n >> 16 & 255, n >> 8 & 255, 255 & n, r >> 24 & 255, r >> 16 & 255, r >> 8 & 255, 255 & r, i >> 24 & 255, i >> 16 & 255, i >> 8 & 255, 255 & i];
+                    return this.is224 || i.push(a >> 24 & 255, a >> 16 & 255, a >> 8 & 255, 255 & a),
+                    i
+                }
+                ,
+                Sha256.prototype.array = Sha256.prototype.digest,
+                Sha256.prototype.arrayBuffer = function() {
+                    this.finalize();
+                    var d = new ArrayBuffer(this.is224 ? 28 : 32)
+                      , $ = new DataView(d);
+                    return $.setUint32(0, this.h0),
+                    $.setUint32(4, this.h1),
+                    $.setUint32(8, this.h2),
+                    $.setUint32(12, this.h3),
+                    $.setUint32(16, this.h4),
+                    $.setUint32(20, this.h5),
+                    $.setUint32(24, this.h6),
+                    this.is224 || $.setUint32(28, this.h7),
+                    d
+                }
+                ,
+                HmacSha256.prototype = new Sha256,
+                HmacSha256.prototype.finalize = function() {
+                    var d;
+                    Sha256.prototype.finalize.call(this),
+                    this.inner && (this.inner = !1,
+                    d = this.array(),
+                    Sha256.call(this, this.is224, this.sharedMemory),
+                    this.update(this.oKeyPad),
+                    this.update(d),
+                    Sha256.prototype.finalize.call(this))
+                }
+                ;
+                var exports = createMethod();
+                exports.sha256 = exports,
+                exports.sha224 = createMethod(!0),
+                exports.sha256.hmac = createHmacMethod(),
+                exports.sha224.hmac = createHmacMethod(!0),
+                COMMON_JS ? module.exports = exports : (root.sha256 = exports.sha256,
+                root.sha224 = exports.sha224,
+                AMD && (__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+                    return exports
+                }
+                .call(exports, __webpack_require__, exports, module),
+                __WEBPACK_AMD_DEFINE_RESULT__ === undefined || (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)))
+            }()
+        }
+        .call(this, __webpack_require__("yLpj"))
     }
-    )()
-}
-)();
+}]);
+
